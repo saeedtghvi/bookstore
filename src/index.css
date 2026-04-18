@@ -1,28 +1,36 @@
 :root {
-  --bg: #F7F4EF;
+  --bg: #F7F5F0;
   --surface: #FFFFFF;
-  --dark: #1A1714;
-  --dark-2: #2D2926;
-  --purple: #5B21B6;
-  --purple-2: #7C3AED;
-  --purple-light: #EDE9FE;
+  --dark: #111613;
+  --dark-2: #1C2420;
+  --primary: #0F766E;
+  --primary-2: #0D9488;
+  --primary-light: #E6FAF8;
   --gold: #B45309;
   --gold-2: #D97706;
   --gold-light: #FEF3C7;
   --red: #DC2626;
   --green: #059669;
-  --text: #1A1714;
-  --text-2: #57534E;
-  --text-3: #A8A29E;
-  --border: #E7E3DC;
-  --shadow-sm: 0 1px 8px rgba(26,23,20,0.06);
-  --shadow-md: 0 4px 20px rgba(26,23,20,0.1);
-  --shadow-lg: 0 8px 40px rgba(26,23,20,0.14);
-  --r-sm: 8px;
-  --r-md: 12px;
-  --r-lg: 16px;
-  --r-xl: 24px;
-  --r-pill: 100px;
+  --text: #111613;
+  --text-2: #4A524E;
+  --text-3: #9CA39F;
+  --border: #E2E8E5;
+  --shadow-sm: 0 1px 6px rgba(15,118,110,0.06);
+  --shadow-md: 0 4px 18px rgba(15,118,110,0.1);
+  --shadow-lg: 0 8px 36px rgba(15,118,110,0.14);
+  /* Sharp corners — no curvature */
+  --r-sm: 0px;
+  --r-md: 0px;
+  --r-lg: 0px;
+  --r-xl: 0px;
+  --r-pill: 0px;
+}
+
+/* Legacy aliases so existing code still works */
+:root {
+  --purple: var(--primary);
+  --purple-2: var(--primary-2);
+  --purple-light: var(--primary-light);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }

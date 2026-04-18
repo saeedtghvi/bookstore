@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
+import { BookOpenIcon } from '../components/Icons';
 
 export default function Login() {
   const [mode, setMode] = useState('login');
@@ -31,11 +32,15 @@ export default function Login() {
       <div style={{ width: '100%', maxWidth: 420 }}>
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div style={{ fontSize: 48, marginBottom: 8 }}>📚</div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--purple)' }}>کتاب‌خانه</h1>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+            <div style={{ background: 'var(--primary)', color: '#fff', padding: '8px 10px', display: 'flex' }}>
+              <BookOpenIcon size={22} />
+            </div>
+            <h1 style={{ fontSize: 22, fontWeight: 900, color: 'var(--text)' }}>کتاب‌خانه</h1>
+          </div>
         </div>
 
-        <div style={{ background: '#fff', borderRadius: 'var(--r-xl)', padding: 32, boxShadow: 'var(--shadow-md)', border: '1px solid var(--border)' }}>
+        <div style={{ background: '#fff', padding: 32, boxShadow: '4px 4px 0 var(--dark)', border: '2px solid var(--dark)' }}>
           {/* Toggle */}
           <div style={{ display: 'flex', background: 'var(--bg)', borderRadius: 'var(--r-pill)', padding: 4, marginBottom: 28 }}>
             {[['login', 'ورود'], ['register', 'ثبت‌نام']].map(([m, l]) => (
@@ -78,8 +83,8 @@ export default function Login() {
           {/* Demo accounts */}
           <div style={{ marginTop: 24, padding: '14px', background: 'var(--bg)', borderRadius: 'var(--r-md)', fontSize: 12, color: 'var(--text-3)' }}>
             <p style={{ fontWeight: 700, marginBottom: 6, color: 'var(--text-2)' }}>حساب‌های آزمایشی:</p>
-            <p>👤 کاربر: user@book.ir / user123</p>
-            <p style={{ marginTop: 3 }}>⚙️ مدیر: admin@book.ir / admin123</p>
+            <p>کاربر: user@book.ir / user123</p>
+            <p style={{ marginTop: 3 }}>مدیر: admin@book.ir / admin123</p>
           </div>
         </div>
 
