@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
+import { BookOpenIcon, FileTextIcon, HomeIcon, SettingsIcon, LogOutIcon, GlobeIcon, EditIcon, TrashIcon, PlusIcon, CheckIcon } from '../components/Icons';
 
 const EMPTY_BOOK = { title: '', author: '', translator: '', price: '', originalPrice: '', cover: '', category: 'رمان کلاسیک', shortDescription: '', description: '', sampleContent: '', tags: '', pageCount: '', publishYear: '', publisher: '', language: 'فارسی', featured: false, rating: 4.5, reviewCount: 0 };
 const EMPTY_POST = { title: '', slug: '', excerpt: '', content: '', author: '', category: 'راهنما', cover: '', readTime: 5, tags: '' };
@@ -14,9 +15,9 @@ export default function AdminPanel() {
   const [confirmDel, setConfirmDel] = useState(null);
 
   const nav = [
-    { id: 'dashboard', icon: '📊', label: 'داشبورد' },
-    { id: 'books', icon: '📚', label: 'کتاب‌ها' },
-    { id: 'blog', icon: '📝', label: 'بلاگ' },
+    { id: 'dashboard', icon: <HomeIcon size={16} />, label: 'داشبورد' },
+    { id: 'books', icon: <BookOpenIcon size={16} />, label: 'کتاب‌ها' },
+    { id: 'blog', icon: <FileTextIcon size={16} />, label: 'بلاگ' },
   ];
 
   const setB = (k) => (e) => setBookForm(p => ({ ...p, [k]: e.type === 'checkbox' ? e.target.checked : e.target.value }));
@@ -38,10 +39,14 @@ export default function AdminPanel() {
     <div style={{ minHeight: '100vh', background: 'var(--bg)', direction: 'rtl', display: 'flex' }}>
       {/* Sidebar */}
       <aside style={{ width: 220, background: 'var(--dark)', position: 'sticky', top: 0, height: '100vh', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
-        <div style={{ padding: '24px 16px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
-          <div style={{ fontSize: 24, marginBottom: 2 }}>⚙️</div>
-          <p style={{ fontSize: 14, fontWeight: 800, color: '#fff' }}>پنل مدیریت</p>
-          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>{user.name}</p>
+        <div style={{ padding: '20px 16px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+            <div style={{ background: 'var(--primary)', padding: '5px 6px', display: 'flex' }}>
+              <SettingsIcon size={14} />
+            </div>
+            <p style={{ fontSize: 14, fontWeight: 800, color: '#fff' }}>پنل مدیریت</p>
+          </div>
+          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 4, marginRight: 30 }}>{user.name}</p>
         </div>
         <nav style={{ flex: 1, padding: 12 }}>
           {nav.map(n => (
@@ -57,8 +62,12 @@ export default function AdminPanel() {
           ))}
         </nav>
         <div style={{ padding: 12, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-          <button onClick={() => navigate('/')} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', border: 'none', borderRadius: 'var(--r-md)', cursor: 'pointer', background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)', fontSize: 12, marginBottom: 6 }}>🌐 مشاهده سایت</button>
-          <button onClick={() => { logout(); navigate('/'); }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', border: 'none', borderRadius: 'var(--r-md)', cursor: 'pointer', background: 'rgba(220,38,38,0.2)', color: '#FCA5A5', fontSize: 12 }}>🚪 خروج</button>
+          <button onClick={() => navigate('/')} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', border: 'none', cursor: 'pointer', background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)', fontSize: 12, marginBottom: 6 }}>
+            <GlobeIcon size={13} /> مشاهده سایت
+          </button>
+          <button onClick={() => { logout(); navigate('/'); }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', border: 'none', cursor: 'pointer', background: 'rgba(220,38,38,0.15)', color: '#FCA5A5', fontSize: 12 }}>
+            <LogOutIcon size={13} /> خروج
+          </button>
         </div>
       </aside>
 
@@ -71,14 +80,14 @@ export default function AdminPanel() {
             <h1 style={{ fontSize: 22, fontWeight: 800, marginBottom: 24 }}>داشبورد</h1>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 16, marginBottom: 32 }}>
               {[
-                { icon: '📚', value: books.length, label: 'کتاب', color: 'var(--purple-light)', tc: 'var(--purple)' },
-                { icon: '📝', value: posts.length, label: 'مقاله بلاگ', color: '#FEF3C7', tc: '#B45309' },
-                { icon: '⭐', value: books.filter(b => b.featured).length, label: 'کتاب ویژه', color: '#D1FAE5', tc: '#059669' },
+                { icon: <BookOpenIcon size={22} />, value: books.length, label: 'کتاب', color: 'var(--primary-light)', tc: 'var(--primary)' },
+                { icon: <FileTextIcon size={22} />, value: posts.length, label: 'مقاله بلاگ', color: '#FEF3C7', tc: '#B45309' },
+                { icon: <CheckIcon size={22} />, value: books.filter(b => b.featured).length, label: 'کتاب ویژه', color: '#D1FAE5', tc: '#059669' },
               ].map(s => (
-                <div key={s.label} style={{ background: s.color, borderRadius: 'var(--r-xl)', padding: 20 }}>
-                  <div style={{ fontSize: 26, marginBottom: 6 }}>{s.icon}</div>
+                <div key={s.label} style={{ background: s.color, border: `1.5px solid ${s.tc}22`, padding: 20 }}>
+                  <div style={{ color: s.tc, marginBottom: 10 }}>{s.icon}</div>
                   <div style={{ fontSize: 28, fontWeight: 900, color: s.tc }}>{s.value}</div>
-                  <div style={{ fontSize: 12, color: s.tc, opacity: 0.8 }}>{s.label}</div>
+                  <div style={{ fontSize: 12, color: s.tc, opacity: 0.8, marginTop: 2 }}>{s.label}</div>
                 </div>
               ))}
             </div>
@@ -93,7 +102,7 @@ export default function AdminPanel() {
                     <p style={{ fontSize: 13, fontWeight: 600 }}>{b.title}</p>
                     <p style={{ fontSize: 11, color: 'var(--text-3)' }}>{b.author} · {b.price?.toLocaleString('fa-IR')} ت</p>
                   </div>
-                  <button onClick={() => { setTab('books'); setBookForm(b); }} style={{ fontSize: 12, color: 'var(--purple)', background: 'var(--purple-light)', border: 'none', borderRadius: 'var(--r-pill)', padding: '4px 10px', cursor: 'pointer', fontWeight: 600 }}>ویرایش</button>
+                  <button onClick={() => { setTab('books'); setBookForm(b); }} style={{ fontSize: 12, color: 'var(--purple)', background: 'var(--purple-light)', border: 'none', padding: '4px 10px', cursor: 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}><EditIcon size={11} /> ویرایش</button>
                 </div>
               ))}
             </div>
@@ -108,7 +117,7 @@ export default function AdminPanel() {
                 <h1 style={{ fontSize: 22, fontWeight: 800 }}>مدیریت کتاب‌ها</h1>
                 <p style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 2 }}>{books.length} کتاب ثبت شده</p>
               </div>
-              <button onClick={() => setBookForm(EMPTY_BOOK)} style={{ background: 'var(--purple)', color: '#fff', border: 'none', borderRadius: 'var(--r-pill)', padding: '10px 20px', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>+ کتاب جدید</button>
+              <button onClick={() => setBookForm(EMPTY_BOOK)} style={{ background: 'var(--purple)', color: '#fff', border: 'none', padding: '10px 20px', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}><PlusIcon size={14} /> کتاب جدید</button>
             </div>
             <div style={{ background: '#fff', borderRadius: 'var(--r-xl)', border: '1px solid var(--border)', overflow: 'hidden' }}>
               {books.map((b, i) => (
@@ -122,8 +131,8 @@ export default function AdminPanel() {
                   </div>
                   <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--purple)', whiteSpace: 'nowrap' }}>{b.price?.toLocaleString('fa-IR')} ت</span>
                   <div style={{ display: 'flex', gap: 6 }}>
-                    <button onClick={() => setBookForm(b)} style={{ fontSize: 12, background: 'var(--purple-light)', color: 'var(--purple)', border: 'none', borderRadius: 'var(--r-pill)', padding: '5px 12px', cursor: 'pointer', fontWeight: 600 }}>ویرایش</button>
-                    <button onClick={() => setConfirmDel({ type: 'book', id: b.id, name: b.title })} style={{ fontSize: 12, background: '#FEF2F2', color: '#DC2626', border: 'none', borderRadius: 'var(--r-pill)', padding: '5px 12px', cursor: 'pointer', fontWeight: 600 }}>حذف</button>
+                    <button onClick={() => setBookForm(b)} style={{ fontSize: 12, background: 'var(--purple-light)', color: 'var(--purple)', border: 'none', padding: '5px 12px', cursor: 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}><EditIcon size={11} /> ویرایش</button>
+                    <button onClick={() => setConfirmDel({ type: 'book', id: b.id, name: b.title })} style={{ fontSize: 12, background: '#FEF2F2', color: '#DC2626', border: 'none', padding: '5px 12px', cursor: 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}><TrashIcon size={11} /> حذف</button>
                   </div>
                 </div>
               ))}
@@ -174,8 +183,8 @@ export default function AdminPanel() {
               </div>
             </div>
             <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
-              <button onClick={saveBook} style={{ background: 'var(--purple)', color: '#fff', border: 'none', borderRadius: 'var(--r-pill)', padding: '12px 28px', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
-                💾 ذخیره کتاب
+              <button onClick={saveBook} style={{ background: 'var(--primary)', color: '#fff', border: 'none', padding: '12px 28px', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <CheckIcon size={15} /> ذخیره کتاب
               </button>
               <button onClick={() => setBookForm(null)} style={{ background: 'var(--bg)', color: 'var(--text-2)', border: '1px solid var(--border)', borderRadius: 'var(--r-pill)', padding: '12px 20px', fontSize: 14, cursor: 'pointer' }}>انصراف</button>
             </div>
@@ -190,7 +199,7 @@ export default function AdminPanel() {
                 <h1 style={{ fontSize: 22, fontWeight: 800 }}>مدیریت بلاگ</h1>
                 <p style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 2 }}>{posts.length} مقاله</p>
               </div>
-              <button onClick={() => setPostForm(EMPTY_POST)} style={{ background: 'var(--purple)', color: '#fff', border: 'none', borderRadius: 'var(--r-pill)', padding: '10px 20px', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>+ مقاله جدید</button>
+              <button onClick={() => setPostForm(EMPTY_POST)} style={{ background: 'var(--purple)', color: '#fff', border: 'none', borderRadius: 'var(--r-pill)', padding: '10px 20px', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}><PlusIcon size={14} /> مقاله جدید</button>
             </div>
             <div style={{ background: '#fff', borderRadius: 'var(--r-xl)', border: '1px solid var(--border)', overflow: 'hidden' }}>
               {posts.map((p, i) => (
@@ -203,8 +212,8 @@ export default function AdminPanel() {
                     <p style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 1 }}>{p.date} · {p.category} · {p.readTime} دقیقه</p>
                   </div>
                   <div style={{ display: 'flex', gap: 6 }}>
-                    <button onClick={() => setPostForm({ ...p, tags: p.tags?.join(', ') || '' })} style={{ fontSize: 12, background: 'var(--purple-light)', color: 'var(--purple)', border: 'none', borderRadius: 'var(--r-pill)', padding: '5px 12px', cursor: 'pointer', fontWeight: 600 }}>ویرایش</button>
-                    <button onClick={() => setConfirmDel({ type: 'post', id: p.id, name: p.title })} style={{ fontSize: 12, background: '#FEF2F2', color: '#DC2626', border: 'none', borderRadius: 'var(--r-pill)', padding: '5px 12px', cursor: 'pointer', fontWeight: 600 }}>حذف</button>
+                    <button onClick={() => setPostForm({ ...p, tags: p.tags?.join(', ') || '' })} style={{ fontSize: 12, background: 'var(--purple-light)', color: 'var(--purple)', border: 'none', padding: '5px 12px', cursor: 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}><EditIcon size={11} /> ویرایش</button>
+                    <button onClick={() => setConfirmDel({ type: 'post', id: p.id, name: p.title })} style={{ fontSize: 12, background: '#FEF2F2', color: '#DC2626', border: 'none', padding: '5px 12px', cursor: 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}><TrashIcon size={11} /> حذف</button>
                   </div>
                 </div>
               ))}
@@ -242,7 +251,7 @@ export default function AdminPanel() {
               </div>
             </div>
             <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
-              <button onClick={savePost} style={{ background: 'var(--purple)', color: '#fff', border: 'none', borderRadius: 'var(--r-pill)', padding: '12px 28px', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>💾 انتشار مقاله</button>
+              <button onClick={savePost} style={{ background: 'var(--primary)', color: '#fff', border: 'none', padding: '12px 28px', fontSize: 14, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}><CheckIcon size={15} /> انتشار مقاله</button>
               <button onClick={() => setPostForm(null)} style={{ background: 'var(--bg)', color: 'var(--text-2)', border: '1px solid var(--border)', borderRadius: 'var(--r-pill)', padding: '12px 20px', fontSize: 14, cursor: 'pointer' }}>انصراف</button>
             </div>
           </div>
@@ -254,7 +263,7 @@ export default function AdminPanel() {
         <>
           <div onClick={() => setConfirmDel(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 300 }} />
           <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', background: '#fff', borderRadius: 'var(--r-xl)', padding: 28, zIndex: 301, maxWidth: 360, width: '90%', textAlign: 'center', direction: 'rtl' }}>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>🗑️</div>
+            <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'center', color: 'var(--red)' }}><TrashIcon size={36} /></div>
             <h3 style={{ fontSize: 17, fontWeight: 800, marginBottom: 8 }}>حذف {confirmDel.type === 'book' ? 'کتاب' : 'مقاله'}؟</h3>
             <p style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 20 }}>«{confirmDel.name}» حذف خواهد شد. این عمل قابل بازگشت نیست.</p>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
