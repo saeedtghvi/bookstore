@@ -1,128 +1,143 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useApp } from '../context/AppContext';
 
-const Navbar = ({ cartCount, onCartClick, searchQuery, onSearchChange }) => {
+export default function Navbar() {
+  const { user, logout, cartCount, setCartOpen } = useApp();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const links = [
+    { to: '/', label: 'خانه' },
+    { to: '/blog', label: 'بلاگ' },
+  ];
+
+  const isActive = (path) => location.pathname === path;
+
   return (
     <nav style={{
-      background: 'white',
-      borderBottom: '1px solid #e5e7eb',
-      position: 'sticky',
-      top: 0,
-      zIndex: 100,
-      boxShadow: '0 2px 12px rgba(124,58,237,0.08)'
+      background: '#fff',
+      borderBottom: '1px solid var(--border)',
+      position: 'sticky', top: 0, zIndex: 90,
+      boxShadow: 'var(--shadow-sm)',
     }}>
       <div style={{
-        maxWidth: '1280px',
-        margin: '0 auto',
-        padding: '0 24px',
-        height: '70px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: '16px'
+        maxWidth: 1280, margin: '0 auto', padding: '0 24px',
+        height: 64, display: 'flex', alignItems: 'center',
+        justifyContent: 'space-between', gap: 16,
       }}>
         {/* Logo */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
-          <span style={{ fontSize: '28px' }}>📚</span>
-          <div>
-            <span style={{
-              fontSize: '20px',
-              fontWeight: '700',
-              color: '#7c3aed',
-              letterSpacing: '-0.5px'
+        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+          <span style={{ fontSize: 28 }}>📚</span>
+          <span style={{ fontSize: 18, fontWeight: 800, color: 'var(--purple)', letterSpacing: -0.5 }}>
+            کتاب‌خانه
+          </span>
+        </Link>
+
+        {/* Desktop links */}
+        <div className="hide-mobile" style={{ display: 'flex', gap: 4 }}>
+          {links.map(l => (
+            <Link key={l.to} to={l.to} style={{
+              padding: '6px 16px', borderRadius: 'var(--r-pill)',
+              fontSize: 14, fontWeight: 600,
+              color: isActive(l.to) ? 'var(--purple)' : 'var(--text-2)',
+              background: isActive(l.to) ? 'var(--purple-light)' : 'transparent',
+              transition: 'all 0.2s',
             }}>
-              کتاب‌خانه
-            </span>
-            <span style={{
-              fontSize: '11px',
-              color: '#9ca3af',
-              display: 'block',
-              marginTop: '-2px'
-            }}>
-              بهترین کتاب‌ها برای شما
-            </span>
-          </div>
+              {l.label}
+            </Link>
+          ))}
         </div>
 
-        {/* Search */}
-        <div style={{
-          flex: 1,
-          maxWidth: '480px',
-          position: 'relative'
-        }}>
-          <span style={{
-            position: 'absolute',
-            right: '16px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            fontSize: '18px',
-            color: '#9ca3af',
-            pointerEvents: 'none'
-          }}>🔍</span>
-          <input
-            type="text"
-            placeholder="جستجو در کتاب‌ها..."
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '10px 48px 10px 16px',
-              border: '2px solid #e5e7eb',
-              borderRadius: '50px',
-              fontSize: '14px',
-              outline: 'none',
-              transition: 'border-color 0.2s',
-              background: '#f9fafb',
-              direction: 'rtl'
-            }}
-            onFocus={(e) => e.target.style.borderColor = '#7c3aed'}
-            onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
-          />
-        </div>
-
-        {/* Cart Button */}
-        <button
-          onClick={onCartClick}
-          style={{
-            position: 'relative',
-            background: '#7c3aed',
-            color: 'white',
-            border: 'none',
-            borderRadius: '50px',
-            padding: '10px 20px',
-            fontSize: '14px',
-            fontWeight: '600',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            cursor: 'pointer',
-            transition: 'background 0.2s, transform 0.1s',
-            flexShrink: 0
+        {/* Actions */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {/* Cart */}
+          <button onClick={() => setCartOpen(true)} style={{
+            position: 'relative', background: 'var(--purple-light)',
+            border: 'none', borderRadius: 'var(--r-pill)',
+            padding: '8px 16px', display: 'flex', alignItems: 'center',
+            gap: 6, fontSize: 14, fontWeight: 600, color: 'var(--purple)',
+            cursor: 'pointer', transition: 'background 0.2s',
           }}
-          onMouseEnter={(e) => e.currentTarget.style.background = '#5b21b6'}
-          onMouseLeave={(e) => e.currentTarget.style.background = '#7c3aed'}
-        >
-          <span style={{ fontSize: '18px' }}>🛒</span>
-          <span>سبد خرید</span>
-          {cartCount > 0 && (
-            <span style={{
-              background: '#f59e0b',
-              color: 'white',
-              borderRadius: '50%',
-              width: '22px',
-              height: '22px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '12px',
-              fontWeight: '700'
-            }}>
-              {cartCount}
-            </span>
+          onMouseEnter={e => e.currentTarget.style.background = '#DDD6FE'}
+          onMouseLeave={e => e.currentTarget.style.background = 'var(--purple-light)'}
+          >
+            <span style={{ fontSize: 18 }}>🛒</span>
+            <span className="hide-mobile">سبد</span>
+            {cartCount > 0 && (
+              <span style={{
+                background: 'var(--red)', color: '#fff', borderRadius: '50%',
+                width: 20, height: 20, fontSize: 11, fontWeight: 700,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>{cartCount}</span>
+            )}
+          </button>
+
+          {/* Auth */}
+          {user ? (
+            <div style={{ position: 'relative' }}>
+              <button onClick={() => setMenuOpen(p => !p)} style={{
+                background: 'var(--dark)', color: '#fff', border: 'none',
+                borderRadius: 'var(--r-pill)', padding: '8px 16px',
+                fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', gap: 8,
+              }}>
+                <span>👤</span>
+                <span className="hide-mobile">{user.name}</span>
+              </button>
+              {menuOpen && (
+                <div style={{
+                  position: 'absolute', top: 44, left: 0,
+                  background: '#fff', borderRadius: 'var(--r-lg)',
+                  boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border)',
+                  padding: 8, minWidth: 160, zIndex: 100,
+                }}>
+                  {user.role === 'admin' ? (
+                    <MenuItem to="/admin" icon="⚙️" label="پنل مدیریت" onClick={() => setMenuOpen(false)} />
+                  ) : (
+                    <MenuItem to="/panel" icon="📖" label="کتابخانه من" onClick={() => setMenuOpen(false)} />
+                  )}
+                  <div style={{ height: 1, background: 'var(--border)', margin: '4px 0' }} />
+                  <button onClick={() => { logout(); setMenuOpen(false); navigate('/'); }} style={{
+                    width: '100%', padding: '10px 12px', background: 'none', border: 'none',
+                    cursor: 'pointer', fontSize: 14, color: 'var(--red)', fontWeight: 600,
+                    display: 'flex', alignItems: 'center', gap: 8, borderRadius: 'var(--r-sm)',
+                  }}>
+                    <span>🚪</span> خروج
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link to="/login" style={{
+              background: 'var(--dark)', color: '#fff',
+              padding: '8px 20px', borderRadius: 'var(--r-pill)',
+              fontSize: 13, fontWeight: 700, transition: 'background 0.2s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = 'var(--purple)'}
+            onMouseLeave={e => e.currentTarget.style.background = 'var(--dark)'}
+            >
+              ورود
+            </Link>
           )}
-        </button>
+        </div>
       </div>
     </nav>
   );
-};
+}
 
-export default Navbar;
+function MenuItem({ to, icon, label, onClick }) {
+  return (
+    <Link to={to} onClick={onClick} style={{
+      display: 'flex', alignItems: 'center', gap: 8,
+      padding: '10px 12px', borderRadius: 'var(--r-sm)', fontSize: 14,
+      fontWeight: 600, color: 'var(--text)', transition: 'background 0.15s',
+    }}
+    onMouseEnter={e => e.currentTarget.style.background = 'var(--bg)'}
+    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+    >
+      <span>{icon}</span> {label}
+    </Link>
+  );
+}
