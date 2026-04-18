@@ -88,3 +88,55 @@ export const SunIcon = ({ size }) => (
 export const MoonIcon = ({ size }) => (
   <I size={size} d={<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>} />
 );
+
+export const HeartIcon = ({ size, filled }) => (
+  <I size={size} fill={filled ? '#EF4444' : 'none'} stroke={filled ? '#EF4444' : 'currentColor'} d={<path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/>} />
+);
+
+export const TagIcon = ({ size }) => (
+  <I size={size} d={<><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></>} />
+);
+
+export const TrendingUpIcon = ({ size }) => (
+  <I size={size} d={<><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></>} />
+);
+
+export const UsersIcon = ({ size }) => (
+  <I size={size} d={<><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></>} />
+);
+
+export const UploadIcon = ({ size }) => (
+  <I size={size} d={<><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0018 9h-1.26A8 8 0 103 16.3"/></>} />
+);
+
+export const BarChartIcon = ({ size }) => (
+  <I size={size} d={<><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></>} />
+);
+
+export const MessageCircleIcon = ({ size }) => (
+  <I size={size} d={<><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></>} />
+);
+
+export const ZapIcon = ({ size }) => (
+  <I size={size} d={<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>} />
+);
+
+export const ShieldIcon = ({ size }) => (
+  <I size={size} d={<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>} />
+);
+
+export const RefreshIcon = ({ size }) => (
+  <I size={size} d={<><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></>} />
+);
+
+export const SmartphoneIcon = ({ size }) => (
+  <I size={size} d={<><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></>} />
+);
+
+export const BookmarkIcon = ({ size, filled }) => (
+  <I size={size} fill={filled ? 'currentColor' : 'none'} d={<path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/>} />
+);
+
+export const ArrowRightIcon = ({ size }) => (
+  <I size={size} d={<><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></>} />
+);

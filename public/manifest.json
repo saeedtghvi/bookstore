@@ -1,0 +1,20 @@
+{
+  "name": "کتاب‌خانه — کتاب دیجیتال",
+  "short_name": "کتاب‌خانه",
+  "description": "فروشگاه کتاب‌های دیجیتال با قیمتی کمتر از نسخه چاپی",
+  "start_url": "/bookstore/#/",
+  "display": "standalone",
+  "background_color": "#F7F5F0",
+  "theme_color": "#0F766E",
+  "lang": "fa",
+  "dir": "rtl",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": ["books", "education", "shopping"]
+}

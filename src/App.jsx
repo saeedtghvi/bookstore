@@ -8,6 +8,7 @@ import BlogPost from './pages/BlogPost';
 import Login from './pages/Login';
 import CustomerPanel from './pages/CustomerPanel';
 import AdminPanel from './pages/AdminPanel';
+import NotFound from './pages/NotFound';
 import Cart from './components/Cart';
 
 function ProtectedRoute({ children, role }) {
@@ -32,7 +33,7 @@ function AppContent() {
         <Route path="/admin/*" element={
           <ProtectedRoute role="admin"><AdminPanel /></ProtectedRoute>
         } />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
       <Cart />
     </>

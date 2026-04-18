@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { CartIcon, UserIcon, BookOpenIcon, SettingsIcon, LogOutIcon, GlobeIcon } from './Icons';
+import { CartIcon, UserIcon, BookOpenIcon, SettingsIcon, LogOutIcon, SunIcon, MoonIcon } from './Icons';
 
 export default function Navbar() {
-  const { user, logout, cartCount, setCartOpen } = useApp();
+  const { user, logout, cartCount, setCartOpen, darkMode, setDarkMode } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -17,9 +17,10 @@ export default function Navbar() {
 
   return (
     <nav style={{
-      background: '#fff',
+      background: 'var(--nav-bg)',
       borderBottom: '2px solid var(--dark)',
       position: 'sticky', top: 0, zIndex: 90,
+      transition: 'background 0.3s',
     }}>
       <div style={{
         maxWidth: 1280, margin: '0 auto', padding: '0 24px',
@@ -44,7 +45,6 @@ export default function Navbar() {
               fontSize: 14, fontWeight: 600,
               color: isActive(l.to) ? '#fff' : 'var(--text-2)',
               background: isActive(l.to) ? 'var(--primary)' : 'transparent',
-              borderBottom: isActive(l.to) ? 'none' : '2px solid transparent',
               transition: 'all 0.15s',
               display: 'inline-block',
             }}
@@ -58,12 +58,24 @@ export default function Navbar() {
 
         {/* Actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {/* Dark mode toggle */}
+          <button onClick={() => setDarkMode(d => !d)} style={{
+            background: 'transparent', border: '1.5px solid var(--border)',
+            width: 36, height: 36, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: 'var(--text-2)', transition: 'all 0.15s',
+          }}
+          title={darkMode ? 'حالت روشن' : 'حالت تاریک'}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--primary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-2)'; }}
+          >
+            {darkMode ? <SunIcon size={16} /> : <MoonIcon size={16} />}
+          </button>
+
           {/* Cart */}
           <button onClick={() => setCartOpen(true)} style={{
-            position: 'relative',
-            background: 'transparent',
-            border: '1.5px solid var(--border)',
-            padding: '7px 14px',
+            position: 'relative', background: 'transparent',
+            border: '1.5px solid var(--border)', padding: '7px 14px',
             display: 'flex', alignItems: 'center', gap: 7,
             fontSize: 13, fontWeight: 600, color: 'var(--text)',
             cursor: 'pointer', transition: 'all 0.15s',
@@ -97,26 +109,29 @@ export default function Navbar() {
                 <span className="hide-mobile">{user.name.split(' ')[0]}</span>
               </button>
               {menuOpen && (
-                <div style={{
-                  position: 'absolute', top: 44, left: 0,
-                  background: '#fff', border: '1.5px solid var(--dark)',
-                  boxShadow: '4px 4px 0 var(--dark)',
-                  padding: 6, minWidth: 170, zIndex: 100,
-                }}>
-                  {user.role === 'admin' ? (
-                    <MenuItem to="/admin" icon={<SettingsIcon size={15} />} label="پنل مدیریت" onClick={() => setMenuOpen(false)} />
-                  ) : (
-                    <MenuItem to="/panel" icon={<BookOpenIcon size={15} />} label="کتابخانه من" onClick={() => setMenuOpen(false)} />
-                  )}
-                  <div style={{ height: 1, background: 'var(--border)', margin: '4px 0' }} />
-                  <button onClick={() => { logout(); setMenuOpen(false); navigate('/'); }} style={{
-                    width: '100%', padding: '9px 12px', background: 'none', border: 'none',
-                    cursor: 'pointer', fontSize: 13, color: 'var(--red)', fontWeight: 600,
-                    display: 'flex', alignItems: 'center', gap: 8, direction: 'rtl',
+                <>
+                  <div style={{ position: 'fixed', inset: 0, zIndex: 98 }} onClick={() => setMenuOpen(false)} />
+                  <div style={{
+                    position: 'absolute', top: 44, left: 0,
+                    background: 'var(--surface)', border: '1.5px solid var(--dark)',
+                    boxShadow: '4px 4px 0 var(--dark)',
+                    padding: 6, minWidth: 170, zIndex: 99,
                   }}>
-                    <LogOutIcon size={15} /> خروج
-                  </button>
-                </div>
+                    {user.role === 'admin' ? (
+                      <MenuItem to="/admin" icon={<SettingsIcon size={15} />} label="پنل مدیریت" onClick={() => setMenuOpen(false)} />
+                    ) : (
+                      <MenuItem to="/panel" icon={<BookOpenIcon size={15} />} label="کتابخانه من" onClick={() => setMenuOpen(false)} />
+                    )}
+                    <div style={{ height: 1, background: 'var(--border)', margin: '4px 0' }} />
+                    <button onClick={() => { logout(); setMenuOpen(false); navigate('/'); }} style={{
+                      width: '100%', padding: '9px 12px', background: 'none', border: 'none',
+                      cursor: 'pointer', fontSize: 13, color: 'var(--red)', fontWeight: 600,
+                      display: 'flex', alignItems: 'center', gap: 8, direction: 'rtl',
+                    }}>
+                      <LogOutIcon size={15} /> خروج
+                    </button>
+                  </div>
+                </>
               )}
             </div>
           ) : (

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { StarIcon, CartIcon, BookOpenIcon, CheckIcon } from './Icons';
+import { StarIcon, CartIcon, BookOpenIcon, CheckIcon, HeartIcon } from './Icons';
 
 function Stars({ rating }) {
   return (
@@ -18,11 +18,12 @@ function Stars({ rating }) {
 
 export default function BookCard({ book, variant = 'default' }) {
   const navigate = useNavigate();
-  const { addToCart, hasPurchased } = useApp();
+  const { addToCart, hasPurchased, isWishlisted, toggleWishlist, user } = useApp();
   const [imgErr, setImgErr] = useState(false);
   const [added, setAdded] = useState(false);
 
   const owned = hasPurchased(book.id);
+  const wishlisted = isWishlisted(book.id);
   const discount = book.originalPrice
     ? Math.round((1 - book.price / book.originalPrice) * 100) : 0;
 
@@ -32,6 +33,11 @@ export default function BookCard({ book, variant = 'default' }) {
     addToCart(book);
     setAdded(true);
     setTimeout(() => setAdded(false), 1600);
+  };
+
+  const handleWishlist = (e) => {
+    e.stopPropagation();
+    toggleWishlist(book.id);
   };
 
   if (variant === 'list') return (
@@ -67,6 +73,7 @@ export default function BookCard({ book, variant = 'default' }) {
         border: '1.5px solid var(--border)',
         display: 'flex', flexDirection: 'column',
         transition: 'border-color 0.15s, box-shadow 0.15s, transform 0.15s',
+        position: 'relative',
       }}
       onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--primary)'; e.currentTarget.style.boxShadow = '4px 4px 0 var(--primary-light)'; e.currentTarget.style.transform = 'translate(-2px,-2px)'; }}
       onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.transform = 'none'; }}
@@ -106,6 +113,21 @@ export default function BookCard({ book, variant = 'default' }) {
             <CheckIcon size={12} /> خریداری شده
           </div>
         )}
+        {/* Wishlist button */}
+        <button onClick={handleWishlist} style={{
+          position: 'absolute', bottom: owned ? 36 : 8, left: 8,
+          background: wishlisted ? '#FFF0F0' : 'rgba(255,255,255,0.9)',
+          border: `1.5px solid ${wishlisted ? '#FCA5A5' : 'rgba(0,0,0,0.1)'}`,
+          width: 30, height: 30, cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          transition: 'all 0.15s', zIndex: 2,
+          color: wishlisted ? '#EF4444' : 'var(--text-3)',
+        }}
+        onMouseEnter={e => { e.currentTarget.style.background = '#FFF0F0'; e.currentTarget.style.color = '#EF4444'; }}
+        onMouseLeave={e => { e.currentTarget.style.background = wishlisted ? '#FFF0F0' : 'rgba(255,255,255,0.9)'; e.currentTarget.style.color = wishlisted ? '#EF4444' : 'var(--text-3)'; }}
+        >
+          <HeartIcon size={14} filled={wishlisted} />
+        </button>
       </div>
 
       {/* Info */}
