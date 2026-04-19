@@ -65,7 +65,14 @@ function save(key, value) {
 
 export function AppProvider({ children }) {
   const [user, setUser]               = useState(() => load('user', null));
-  const [users, setUsers]             = useState(() => load('users', DEFAULT_USERS));
+  const [users, setUsers]             = useState(() => {
+    const stored = load('users', null);
+    if (!stored) return DEFAULT_USERS;
+    // کاربران پیش‌فرض جدید (مثل ناشر) که هنوز در localStorage نیستند را اضافه کن
+    const storedIds = new Set(stored.map(u => u.id));
+    const newDefaults = DEFAULT_USERS.filter(u => !storedIds.has(u.id));
+    return [...stored, ...newDefaults];
+  });
   const [books, setBooks]             = useState(() => {
     const stored = load('books', null);
     if (!stored) return BOOKS;
