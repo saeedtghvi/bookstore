@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { CartIcon, UserIcon, BookOpenIcon, SettingsIcon, LogOutIcon, SunIcon, MoonIcon } from './Icons';
+import { CartIcon, UserIcon, BookOpenIcon, SettingsIcon, LogOutIcon } from './Icons';
 
 export default function Navbar() {
-  const { user, logout, cartCount, setCartOpen, darkMode, setDarkMode } = useApp();
+  const { user, logout, cartCount, setCartOpen } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -58,20 +58,6 @@ export default function Navbar() {
 
         {/* Actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {/* Dark mode toggle */}
-          <button onClick={() => setDarkMode(d => !d)} style={{
-            background: 'transparent', border: '1.5px solid var(--border)',
-            width: 36, height: 36, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: 'var(--text-2)', transition: 'all 0.15s',
-          }}
-          title={darkMode ? 'حالت روشن' : 'حالت تاریک'}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--primary)'; e.currentTarget.style.color = 'var(--primary)'; }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-2)'; }}
-          >
-            {darkMode ? <SunIcon size={16} /> : <MoonIcon size={16} />}
-          </button>
-
           {/* Cart */}
           <button onClick={() => setCartOpen(true)} style={{
             position: 'relative', background: 'transparent',

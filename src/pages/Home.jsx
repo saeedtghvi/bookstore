@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import FestivalBanner from '../components/FestivalBanner';
 import BookCard from '../components/BookCard';
@@ -8,7 +8,8 @@ import { useApp } from '../context/AppContext';
 import { CATEGORIES } from '../data/books';
 import {
   SearchIcon, ChevronRightIcon, ChevronLeftIcon,
-  ZapIcon, SmartphoneIcon, ShieldIcon, RefreshIcon, ArrowRightIcon,
+  ZapIcon, SmartphoneIcon, ShieldIcon, RefreshIcon,
+  StarIcon, CartIcon, BookOpenIcon, CheckIcon, ArrowRightIcon,
 } from '../components/Icons';
 
 /* ── Skeleton card ── */
@@ -20,7 +21,6 @@ function SkeletonCard() {
         <div className="skeleton" style={{ height: 16, width: '80%', marginBottom: 8 }} />
         <div className="skeleton" style={{ height: 12, width: '50%', marginBottom: 8 }} />
         <div className="skeleton" style={{ height: 12, width: '100%', marginBottom: 8 }} />
-        <div className="skeleton" style={{ height: 12, width: '70%', marginBottom: 12 }} />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div className="skeleton" style={{ height: 20, width: 70 }} />
           <div className="skeleton" style={{ height: 32, width: 64 }} />
@@ -30,95 +30,161 @@ function SkeletonCard() {
   );
 }
 
-/* ── Featured slider ── */
-function FeaturedSlider({ books }) {
-  const [idx, setIdx] = useState(0);
-  const [animating, setAnimating] = useState(false);
-  const max = Math.max(0, books.length - 1);
-
-  const go = useCallback((dir) => {
-    if (animating) return;
-    setAnimating(true);
-    setIdx(i => dir === 'next' ? (i >= max ? 0 : i + 1) : (i <= 0 ? max : i - 1));
-    setTimeout(() => setAnimating(false), 350);
-  }, [animating, max]);
-
-  // Auto-advance
-  useEffect(() => {
-    const t = setInterval(() => go('next'), 4000);
-    return () => clearInterval(t);
-  }, [go]);
+/* ── Featured Books Section ── */
+function FeaturedSection({ books }) {
+  const navigate = useNavigate();
+  const { addToCart, hasPurchased } = useApp();
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [added, setAdded] = useState({});
 
   if (!books.length) return null;
-  const book = books[idx];
+  const active = books[activeIdx];
+  const discount = active.originalPrice
+    ? Math.round((1 - active.price / active.originalPrice) * 100) : 0;
+  const owned = hasPurchased(active.id);
+
+  const handleBuy = (book) => {
+    if (owned) { navigate('/panel'); return; }
+    addToCart(book);
+    setAdded(p => ({ ...p, [book.id]: true }));
+    setTimeout(() => setAdded(p => ({ ...p, [book.id]: false })), 1600);
+  };
 
   return (
-    <div style={{ position: 'relative', overflow: 'hidden', background: 'var(--dark-2)', direction: 'rtl' }}>
+    <section style={{ background: '#FAFAF8', borderTop: '1.5px solid var(--border)', borderBottom: '1.5px solid var(--border)', direction: 'rtl', overflow: 'hidden' }}>
       <style>{`
-        .slider-content { display: grid; grid-template-columns: 1fr 260px; gap: 40px; align-items: center; max-width: 1280px; margin: 0 auto; padding: 40px 24px; }
-        @media (max-width: 700px) { .slider-content { grid-template-columns: 1fr; gap: 20px; } .slider-cover { display: none; } }
+        .featured-grid {
+          display: grid;
+          grid-template-columns: 1fr 380px;
+          gap: 0;
+          max-width: 1280px;
+          margin: 0 auto;
+          min-height: 360px;
+        }
+        .featured-thumbs {
+          display: flex;
+          gap: 12px;
+          flex-wrap: wrap;
+        }
+        @media (max-width: 860px) {
+          .featured-grid {
+            grid-template-columns: 1fr;
+          }
+          .featured-sidebar {
+            border-right: none !important;
+            border-top: 1.5px solid var(--border);
+            padding: 20px 24px !important;
+          }
+        }
       `}</style>
 
-      <div className="slider-content" key={idx} style={{ animation: 'fadeIn 0.35s ease forwards' }}>
-        <div>
-          <div style={{ display: 'inline-block', background: 'var(--primary)', color: '#fff', padding: '3px 12px', fontSize: 11, fontWeight: 700, marginBottom: 16, letterSpacing: 1 }}>
-            کتاب ویژه
+      <div className="featured-grid">
+        {/* Left: active book detail */}
+        <div style={{ padding: '40px 40px 40px 32px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 0 }} key={active.id} className="fade-in">
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
+            <div style={{ width: 28, height: 3, background: 'var(--primary)' }} />
+            <span style={{ fontSize: 12, fontWeight: 800, color: 'var(--primary)', letterSpacing: 1, textTransform: 'uppercase' }}>کتاب ویژه</span>
           </div>
-          <h2 style={{ fontSize: 'clamp(20px,3vw,32px)', fontWeight: 900, color: '#fff', lineHeight: 1.4, marginBottom: 12 }}>{book.title}</h2>
-          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.6)', marginBottom: 8 }}>{book.author}</p>
-          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.8, marginBottom: 24, maxWidth: 480 }} className="clamp-3">{book.shortDescription}</p>
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-            <span style={{ fontSize: 22, fontWeight: 900, color: 'var(--primary)' }}>{book.price.toLocaleString('fa-IR')} ت</span>
-            <Link to={`/book/${book.id}`} style={{
-              background: 'var(--primary)', color: '#fff',
-              padding: '10px 24px', fontSize: 14, fontWeight: 700,
-              display: 'flex', alignItems: 'center', gap: 8,
-            }}>
-              مشاهده کتاب <ArrowRightIcon size={15} />
-            </Link>
+
+          <div style={{ display: 'flex', gap: 28, alignItems: 'flex-start' }}>
+            {/* Cover */}
+            <div style={{ width: 140, height: 190, flexShrink: 0, overflow: 'hidden', background: 'var(--primary-light)', boxShadow: '5px 5px 0 var(--border)', position: 'relative' }}>
+              <img src={active.cover} alt={active.title}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                onError={e => e.target.style.display = 'none'} />
+              {discount > 0 && (
+                <div style={{ position: 'absolute', top: 0, right: 0, background: '#DC2626', color: '#fff', padding: '4px 8px', fontSize: 11, fontWeight: 800 }}>−{discount}%</div>
+              )}
+            </div>
+
+            {/* Info */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <h2 style={{ fontSize: 'clamp(18px,2.5vw,26px)', fontWeight: 900, lineHeight: 1.35, marginBottom: 8, color: 'var(--text)' }}>{active.title}</h2>
+              <p style={{ fontSize: 14, color: 'var(--primary)', fontWeight: 700, marginBottom: 12 }}>{active.author}</p>
+
+              {/* Stars */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 14 }}>
+                <div style={{ display: 'flex', color: '#D97706' }}>
+                  {[1,2,3,4,5].map(i => <StarIcon key={i} size={14} filled={i <= Math.round(active.rating)} />)}
+                </div>
+                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{active.rating}</span>
+                <span style={{ fontSize: 12, color: 'var(--text-3)' }}>({active.reviewCount?.toLocaleString('fa-IR')} نظر)</span>
+              </div>
+
+              <p style={{ fontSize: 14, color: 'var(--text-2)', lineHeight: 1.9, marginBottom: 20 }} className="clamp-3">{active.shortDescription}</p>
+
+              {/* Tags */}
+              {active.tags?.length > 0 && (
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 20 }}>
+                  {active.tags.slice(0, 4).map(t => (
+                    <span key={t} style={{ fontSize: 11, padding: '3px 10px', background: 'var(--primary-light)', color: 'var(--primary)', fontWeight: 600 }}>{t}</span>
+                  ))}
+                </div>
+              )}
+
+              {/* Price + CTA */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                <div>
+                  <span style={{ fontSize: 24, fontWeight: 900, color: 'var(--text)' }}>{active.price.toLocaleString('fa-IR')}</span>
+                  <span style={{ fontSize: 13, color: 'var(--text-3)', marginRight: 4 }}>تومان</span>
+                  {active.originalPrice && (
+                    <div style={{ fontSize: 12, color: 'var(--text-3)', textDecoration: 'line-through' }}>{active.originalPrice.toLocaleString('fa-IR')}</div>
+                  )}
+                </div>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button onClick={() => handleBuy(active)} style={{
+                    background: owned ? 'var(--primary)' : (added[active.id] ? 'var(--green)' : 'var(--dark)'),
+                    color: '#fff', border: 'none', padding: '11px 22px', fontSize: 13, fontWeight: 800,
+                    cursor: 'pointer', transition: 'background 0.2s', display: 'flex', alignItems: 'center', gap: 7,
+                  }}
+                  onMouseEnter={e => { if (!owned && !added[active.id]) e.currentTarget.style.background = 'var(--primary)'; }}
+                  onMouseLeave={e => { if (!owned && !added[active.id]) e.currentTarget.style.background = 'var(--dark)'; }}
+                  >
+                    {owned ? <><BookOpenIcon size={14} /> مطالعه</> : added[active.id] ? <><CheckIcon size={14} /> افزوده شد</> : <><CartIcon size={14} /> خرید کتاب</>}
+                  </button>
+                  <Link to={`/book/${active.id}`} style={{ background: 'transparent', color: 'var(--primary)', border: '1.5px solid var(--primary)', padding: '11px 18px', fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 5 }}>
+                    جزئیات <ArrowRightIcon size={14} />
+                  </Link>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-        <div className="slider-cover" style={{ width: 200, height: 270, margin: '0 auto', boxShadow: '8px 8px 0 rgba(0,0,0,0.4)', overflow: 'hidden', background: 'var(--primary-light)', flexShrink: 0 }}>
-          <img src={book.cover} alt={book.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => e.target.style.display = 'none'} />
+
+        {/* Right: thumbnails sidebar */}
+        <div className="featured-sidebar" style={{ borderRight: '1.5px solid var(--border)', padding: '32px 24px', background: '#F2F0EB', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <p style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-3)', marginBottom: 4, letterSpacing: 1 }}>همه کتاب‌های ویژه</p>
+          {books.map((book, i) => (
+            <button key={book.id} onClick={() => setActiveIdx(i)} style={{
+              display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px',
+              background: i === activeIdx ? '#fff' : 'transparent',
+              border: i === activeIdx ? '1.5px solid var(--primary)' : '1.5px solid transparent',
+              cursor: 'pointer', textAlign: 'right', transition: 'all 0.18s',
+              boxShadow: i === activeIdx ? '3px 3px 0 var(--primary-light)' : 'none',
+            }}
+            onMouseEnter={e => { if (i !== activeIdx) e.currentTarget.style.background = 'rgba(255,255,255,0.6)'; }}
+            onMouseLeave={e => { if (i !== activeIdx) e.currentTarget.style.background = 'transparent'; }}
+            >
+              <div style={{ width: 44, height: 60, flexShrink: 0, overflow: 'hidden', background: 'var(--primary-light)' }}>
+                <img src={book.cover} alt={book.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => e.target.style.display = 'none'} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontSize: 13, fontWeight: 700, color: i === activeIdx ? 'var(--primary)' : 'var(--text)' }} className="clamp-2">{book.title}</p>
+                <p style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>{book.author}</p>
+                <p style={{ fontSize: 13, fontWeight: 800, color: 'var(--text)', marginTop: 3 }}>{book.price.toLocaleString('fa-IR')} ت</p>
+              </div>
+              {i === activeIdx && <div style={{ width: 3, height: 40, background: 'var(--primary)', flexShrink: 0 }} />}
+            </button>
+          ))}
         </div>
       </div>
-
-      {/* Nav buttons */}
-      <button onClick={() => go('prev')} style={{
-        position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)',
-        background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)',
-        color: '#fff', width: 38, height: 38, cursor: 'pointer',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        transition: 'background 0.15s',
-      }} onMouseEnter={e => e.currentTarget.style.background = 'var(--primary)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}>
-        <ChevronRightIcon size={18} />
-      </button>
-      <button onClick={() => go('next')} style={{
-        position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)',
-        background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)',
-        color: '#fff', width: 38, height: 38, cursor: 'pointer',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        transition: 'background 0.15s',
-      }} onMouseEnter={e => e.currentTarget.style.background = 'var(--primary)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}>
-        <ChevronLeftIcon size={18} />
-      </button>
-
-      {/* Dots */}
-      <div style={{ display: 'flex', justifyContent: 'center', gap: 6, padding: '0 0 16px' }}>
-        {books.map((_, i) => (
-          <button key={i} onClick={() => setIdx(i)} style={{
-            width: i === idx ? 24 : 8, height: 8, background: i === idx ? 'var(--primary)' : 'rgba(255,255,255,0.25)',
-            border: 'none', cursor: 'pointer', transition: 'all 0.25s',
-          }} />
-        ))}
-      </div>
-    </div>
+    </section>
   );
 }
 
 /* ── Category pill ── */
 const CAT_COLORS = {
-  'همه': { bg: 'var(--primary)', text: '#fff' },
+  'رمان کلاسیک': { bg: '#1D4ED8', text: '#fff' },
   'برنامه‌نویسی': { bg: '#1D4ED8', text: '#fff' },
   'طراحی': { bg: '#7C3AED', text: '#fff' },
   'کسب‌وکار': { bg: '#D97706', text: '#fff' },
@@ -127,7 +193,7 @@ const CAT_COLORS = {
 };
 
 export default function Home() {
-  const { books } = useApp();
+  const { books, bookCategories } = useApp();
   const [cat, setCat] = useState('همه');
   const [sort, setSort] = useState('default');
   const [search, setSearch] = useState('');
@@ -153,6 +219,7 @@ export default function Home() {
   }, [books, cat, sort, search]);
 
   const featured = books.filter(b => b.featured);
+  const allCats = ['همه', ...(bookCategories || CATEGORIES)];
 
   const features = [
     { icon: <ZapIcon size={18} />, title: 'دسترسی فوری', sub: 'بلافاصله پس از خرید', color: '#D97706' },
@@ -176,15 +243,10 @@ export default function Home() {
 
         <div style={{ maxWidth: 1280, margin: '0 auto', position: 'relative', display: 'grid', gridTemplateColumns: '1fr auto', gap: 40, alignItems: 'center' }}>
           <div className="fade-in">
-            <div style={{
-              display: 'inline-flex', alignItems: 'center', gap: 8,
-              background: 'rgba(15,118,110,0.25)', border: '1px solid rgba(20,184,166,0.4)',
-              padding: '5px 16px', marginBottom: 20,
-            }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(15,118,110,0.25)', border: '1px solid rgba(20,184,166,0.4)', padding: '5px 16px', marginBottom: 20 }}>
               <div style={{ width: 6, height: 6, background: 'var(--primary)', borderRadius: '50%', animation: 'pulse 2s infinite' }} />
               <span style={{ fontSize: 13, fontWeight: 600, color: '#5EEAD4' }}>نسل جدید کتاب‌های دیجیتال</span>
             </div>
-
             <h1 style={{ fontSize: 'clamp(28px,4.5vw,58px)', fontWeight: 900, lineHeight: 1.2, marginBottom: 20, letterSpacing: -1 }}>
               کتاب‌های مورد علاقه‌تان را<br />
               <span style={{ color: 'var(--primary)' }}>با محیطی زیبا</span> بخوانید
@@ -192,26 +254,16 @@ export default function Home() {
             <p style={{ fontSize: 'clamp(14px,2vw,16px)', color: 'rgba(255,255,255,0.6)', lineHeight: 2, maxWidth: 480, marginBottom: 32 }}>
               تجربه‌ای متفاوت از مطالعه — با امکانات پیشرفته، قیمتی کمتر از نسخه چاپی، و دسترسی فوری پس از خرید.
             </p>
-
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              <a href="#books" style={{
-                background: 'var(--primary)', color: '#fff', padding: '13px 28px',
-                fontSize: 15, fontWeight: 700, transition: 'background 0.2s',
-                display: 'flex', alignItems: 'center', gap: 8,
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = 'var(--primary-2)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'var(--primary)'}
+              <a href="#books" style={{ background: 'var(--primary)', color: '#fff', padding: '13px 28px', fontSize: 15, fontWeight: 700, transition: 'background 0.2s', display: 'flex', alignItems: 'center', gap: 8 }}
+                onMouseEnter={e => e.currentTarget.style.background = 'var(--primary-2)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'var(--primary)'}
               >مشاهده کتاب‌ها <ArrowRightIcon size={16} /></a>
-              <Link to="/blog" style={{
-                background: 'rgba(255,255,255,0.08)', color: '#fff', padding: '13px 28px',
-                fontSize: 15, fontWeight: 600, border: '1px solid rgba(255,255,255,0.15)',
-                transition: 'background 0.2s',
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.15)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
+              <Link to="/blog" style={{ background: 'rgba(255,255,255,0.08)', color: '#fff', padding: '13px 28px', fontSize: 15, fontWeight: 600, border: '1px solid rgba(255,255,255,0.15)', transition: 'background 0.2s' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.15)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
               >بلاگ</Link>
             </div>
-
             <div style={{ display: 'flex', gap: 32, marginTop: 40, flexWrap: 'wrap' }}>
               {[['۸+', 'کتاب دیجیتال'], ['۲۴+', 'هزار خواننده'], ['۴.۸', 'میانگین امتیاز']].map(([n, l]) => (
                 <div key={l}>
@@ -221,18 +273,9 @@ export default function Home() {
               ))}
             </div>
           </div>
-
-          {/* Book stack */}
           <div className="hide-mobile" style={{ position: 'relative', width: 220, height: 280 }}>
             {featured.slice(0, 3).map((book, i) => (
-              <div key={book.id} style={{
-                position: 'absolute', top: i * 16, left: i * -10,
-                width: 160, height: 210, overflow: 'hidden',
-                boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-                transform: `rotate(${[-4, 0, 4][i]}deg)`,
-                zIndex: 3 - i, background: 'var(--primary-light)',
-                transition: 'transform 0.3s',
-              }}>
+              <div key={book.id} style={{ position: 'absolute', top: i * 16, left: i * -10, width: 160, height: 210, overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.5)', transform: `rotate(${[-4, 0, 4][i]}deg)`, zIndex: 3 - i, background: 'var(--primary-light)' }}>
                 <img src={book.cover} alt={book.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => e.target.style.display = 'none'} />
               </div>
             ))}
@@ -240,28 +283,28 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Features strip */}
-      <section style={{ background: 'var(--dark-2)', direction: 'rtl', padding: '18px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+      {/* Features strip — between hero (dark) and featured (light cream) */}
+      <section style={{ background: 'var(--primary)', direction: 'rtl', padding: '16px 24px' }}>
         <div style={{ maxWidth: 1280, margin: '0 auto', display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap', gap: 16 }}>
-          {features.map(({ icon, title, sub, color }) => (
+          {features.map(({ icon, title, sub }) => (
             <div key={title} style={{ display: 'flex', alignItems: 'center', gap: 10, color: '#fff' }}>
-              <div style={{ background: color + '22', border: `1px solid ${color}44`, color, width: 38, height: 38, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {icon}
               </div>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 700 }}>{title}</div>
-                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', marginTop: 1 }}>{sub}</div>
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', marginTop: 1 }}>{sub}</div>
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Featured slider */}
-      <FeaturedSlider books={featured} />
+      {/* Featured books — light cream, clearly distinct from dark hero */}
+      {featured.length > 0 && <FeaturedSection books={featured} />}
 
       {/* All books */}
-      <section id="books" style={{ background: 'var(--bg)', padding: '48px 24px', direction: 'rtl', flex: 1 }}>
+      <section id="books" style={{ background: '#fff', padding: '48px 24px', direction: 'rtl', flex: 1 }}>
         <div style={{ maxWidth: 1280, margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
             <div>
@@ -293,16 +336,16 @@ export default function Home() {
 
           {/* Category filter */}
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 28 }}>
-            {['همه', ...CATEGORIES].map(c => {
+            {allCats.map(c => {
               const active = cat === c;
               const color = CAT_COLORS[c] || { bg: 'var(--primary)', text: '#fff' };
               return (
                 <button key={c} onClick={() => setCat(c)} style={{
                   padding: '7px 16px', fontSize: 13, fontWeight: 600,
                   border: '2px solid', cursor: 'pointer', transition: 'all 0.18s',
-                  borderColor: active ? color.bg : 'var(--border)',
-                  background: active ? color.bg : 'var(--surface)',
-                  color: active ? color.text : 'var(--text-2)',
+                  borderColor: active ? (c === 'همه' ? 'var(--primary)' : color.bg) : 'var(--border)',
+                  background: active ? (c === 'همه' ? 'var(--primary)' : color.bg) : 'var(--surface)',
+                  color: active ? (c === 'همه' ? '#fff' : color.text) : 'var(--text-2)',
                 }}>{c}</button>
               );
             })}

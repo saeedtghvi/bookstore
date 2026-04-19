@@ -4,10 +4,12 @@ import { useApp } from '../context/AppContext';
 import {
   BookOpenIcon, FileTextIcon, HomeIcon, SettingsIcon, LogOutIcon, GlobeIcon,
   EditIcon, TrashIcon, PlusIcon, CheckIcon, BarChartIcon, UsersIcon, UploadIcon,
+  TagIcon, XIcon, StarIcon, UserIcon,
 } from '../components/Icons';
 
-const EMPTY_BOOK = { title: '', author: '', translator: '', price: '', originalPrice: '', cover: '', category: 'رمان کلاسیک', shortDescription: '', description: '', sampleContent: '', tags: '', pageCount: '', publishYear: '', publisher: '', language: 'فارسی', featured: false, rating: 4.5, reviewCount: 0 };
-const EMPTY_POST = { title: '', slug: '', excerpt: '', content: '', author: '', category: 'راهنما', cover: '', readTime: 5, tags: '' };
+const EMPTY_BOOK = { title: '', author: '', translator: '', price: '', originalPrice: '', cover: '', category: '', shortDescription: '', description: '', sampleContent: '', tags: '', pageCount: '', publishYear: '', publisher: '', language: 'فارسی', featured: false, rating: 4.5, reviewCount: 0 };
+const EMPTY_POST = { title: '', slug: '', excerpt: '', content: '', author: '', category: '', cover: '', readTime: 5, tags: '' };
+const EMPTY_USER = { name: '', email: '', password: '', role: 'customer' };
 
 /* ── SVG bar chart ── */
 function SalesChart({ books, users }) {
@@ -15,77 +17,121 @@ function SalesChart({ books, users }) {
   books.forEach(b => { cats[b.category] = (cats[b.category] || 0) + 1; });
   const entries = Object.entries(cats).sort((a, b) => b[1] - a[1]).slice(0, 6);
   const max = Math.max(...entries.map(e => e[1]), 1);
-  const W = 480, H = 160, barW = Math.min(52, (W - 40) / entries.length - 10);
+  const W = 480, H = 160;
 
   return (
     <div style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', padding: '20px 20px 8px' }}>
       <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 16, color: 'var(--text)' }}>توزیع کتاب‌ها بر اساس دسته</h3>
       <svg width="100%" viewBox={`0 0 ${W} ${H + 40}`} style={{ overflow: 'visible' }}>
         {entries.map(([cat, count], i) => {
-          const x = 20 + i * ((W - 40) / entries.length);
+          const step = (W - 40) / entries.length;
+          const barW = Math.min(52, step - 10);
+          const x = 20 + i * step;
           const barH = Math.max(4, (count / max) * H);
           const y = H - barH;
           return (
             <g key={cat}>
               <rect x={x} y={y} width={barW} height={barH} fill="var(--primary)" opacity="0.85" />
               <text x={x + barW / 2} y={y - 6} textAnchor="middle" fontSize={11} fill="var(--primary)" fontWeight="700">{count}</text>
-              <text x={x + barW / 2} y={H + 18} textAnchor="middle" fontSize={9} fill="var(--text-3)"
-                style={{ fontSize: 9 }}>{cat.length > 8 ? cat.slice(0, 8) + '…' : cat}</text>
+              <text x={x + barW / 2} y={H + 18} textAnchor="middle" fontSize={9} fill="var(--text-3)">{cat.length > 8 ? cat.slice(0, 8) + '…' : cat}</text>
             </g>
           );
         })}
         <line x1={16} y1={H} x2={W - 16} y2={H} stroke="var(--border)" strokeWidth={1} />
       </svg>
       <div style={{ display: 'flex', gap: 20, marginTop: 8, flexWrap: 'wrap' }}>
-        <div style={{ fontSize: 13, color: 'var(--text-2)' }}>
-          <span style={{ fontWeight: 800, color: 'var(--primary)', fontSize: 16 }}>{books.length}</span> کتاب کل
-        </div>
-        <div style={{ fontSize: 13, color: 'var(--text-2)' }}>
-          <span style={{ fontWeight: 800, color: '#D97706', fontSize: 16 }}>{users.filter(u => u.role === 'customer').length}</span> کاربر عادی
-        </div>
-        <div style={{ fontSize: 13, color: 'var(--text-2)' }}>
-          <span style={{ fontWeight: 800, color: '#059669', fontSize: 16 }}>{users.reduce((s, u) => s + (u.purchasedBooks?.length || 0), 0)}</span> خرید کل
-        </div>
+        <div style={{ fontSize: 13, color: 'var(--text-2)' }}><span style={{ fontWeight: 800, color: 'var(--primary)', fontSize: 16 }}>{books.length}</span> کتاب کل</div>
+        <div style={{ fontSize: 13, color: 'var(--text-2)' }}><span style={{ fontWeight: 800, color: '#D97706', fontSize: 16 }}>{users.filter(u => u.role === 'customer').length}</span> کاربر عادی</div>
+        <div style={{ fontSize: 13, color: 'var(--text-2)' }}><span style={{ fontWeight: 800, color: '#059669', fontSize: 16 }}>{users.reduce((s, u) => s + (u.purchasedBooks?.length || 0), 0)}</span> خرید کل</div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Category manager ── */
+function CategoryManager({ categories, onAdd, onRemove, label }) {
+  const [newCat, setNewCat] = useState('');
+  return (
+    <div style={{ marginBottom: 20 }}>
+      <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-2)', marginBottom: 10 }}>{label}</p>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
+        {categories.map(c => (
+          <span key={c} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', background: 'var(--primary-light)', color: 'var(--primary)', fontSize: 12, fontWeight: 600 }}>
+            {c}
+            <button onClick={() => onRemove(c)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: 0, display: 'flex', lineHeight: 1 }}>
+              <XIcon size={11} />
+            </button>
+          </span>
+        ))}
+      </div>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <input value={newCat} onChange={e => setNewCat(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && newCat.trim()) { onAdd(newCat.trim()); setNewCat(''); }}}
+          placeholder="دسته‌بندی جدید..."
+          style={{ flex: 1, padding: '8px 12px', border: '1.5px solid var(--border)', fontSize: 13, background: 'var(--surface)', color: 'var(--text)', outline: 'none' }}
+        />
+        <button onClick={() => { if (newCat.trim()) { onAdd(newCat.trim()); setNewCat(''); }}} style={{ background: 'var(--primary)', color: '#fff', border: 'none', padding: '8px 14px', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
+          <PlusIcon size={13} /> افزودن
+        </button>
       </div>
     </div>
   );
 }
 
 export default function AdminPanel() {
-  const { user, users, books, addBook, updateBook, deleteBook, posts, addPost, updatePost, deletePost, logout } = useApp();
+  const {
+    user, users, addUser, deleteUser,
+    books, addBook, updateBook, deleteBook,
+    posts, addPost, updatePost, deletePost,
+    logout, festivalEnabled, setFestivalEnabled,
+    bookCategories, addBookCategory, removeBookCategory,
+    postCategories, addPostCategory, removePostCategory,
+    discountCodes, addDiscountCode, removeDiscountCode,
+    customerGroups, addCustomerGroup, updateCustomerGroup, deleteCustomerGroup,
+    getUserGroup, getUserSpending,
+  } = useApp();
   const navigate = useNavigate();
   const [tab, setTab] = useState('dashboard');
   const [bookForm, setBookForm] = useState(null);
   const [postForm, setPostForm] = useState(null);
+  const [userForm, setUserForm] = useState(null);
+  const [groupForm, setGroupForm] = useState(null);
   const [confirmDel, setConfirmDel] = useState(null);
+  const [newCodeForm, setNewCodeForm] = useState({ code: '', pct: '' });
+  const [codeMsg, setCodeMsg] = useState('');
   const coverInputRef = useRef(null);
 
   const nav = [
-    { id: 'dashboard', icon: <HomeIcon size={16} />,      label: 'داشبورد' },
-    { id: 'books',     icon: <BookOpenIcon size={16} />,  label: 'کتاب‌ها' },
-    { id: 'blog',      icon: <FileTextIcon size={16} />,  label: 'بلاگ' },
-    { id: 'users',     icon: <UsersIcon size={16} />,     label: 'کاربران' },
-    { id: 'stats',     icon: <BarChartIcon size={16} />,  label: 'آمار' },
+    { id: 'dashboard',  icon: <HomeIcon size={16} />,      label: 'داشبورد' },
+    { id: 'books',      icon: <BookOpenIcon size={16} />,  label: 'کتاب‌ها' },
+    { id: 'blog',       icon: <FileTextIcon size={16} />,  label: 'بلاگ' },
+    { id: 'users',      icon: <UsersIcon size={16} />,     label: 'کاربران' },
+    { id: 'club',       icon: <StarIcon size={16} />,      label: 'باشگاه مشتریان' },
+    { id: 'stats',      icon: <BarChartIcon size={16} />,  label: 'آمار' },
+    { id: 'settings',   icon: <SettingsIcon size={16} />,  label: 'تنظیمات' },
   ];
 
   const setB = (k) => (e) => setBookForm(p => ({ ...p, [k]: e.type === 'checkbox' ? e.target.checked : e.target.value }));
   const setP = (k) => (e) => setPostForm(p => ({ ...p, [k]: e.target.value }));
+  const setU = (k) => (e) => setUserForm(p => ({ ...p, [k]: e.target.value }));
 
   const saveBook = () => {
-    const book = {
-      ...bookForm,
-      price: Number(bookForm.price), originalPrice: Number(bookForm.originalPrice) || 0,
-      pageCount: Number(bookForm.pageCount) || 0, publishYear: Number(bookForm.publishYear) || 0,
-      tags: (bookForm.tags || '').split(',').map(t => t.trim()).filter(Boolean),
-    };
+    const book = { ...bookForm, price: Number(bookForm.price), originalPrice: Number(bookForm.originalPrice) || 0, pageCount: Number(bookForm.pageCount) || 0, publishYear: Number(bookForm.publishYear) || 0, tags: (bookForm.tags || '').split(',').map(t => t.trim()).filter(Boolean) };
+    if (!book.category) book.category = bookCategories[0] || 'عمومی';
     if (book.id) updateBook(book); else addBook(book);
     setBookForm(null);
   };
 
   const savePost = () => {
     const post = { ...postForm, tags: (postForm.tags || '').split(',').map(t => t.trim()).filter(Boolean), date: new Date().toLocaleDateString('fa-IR') };
+    if (!post.category) post.category = postCategories[0] || 'عمومی';
     if (post.id) updatePost(post); else addPost(post);
     setPostForm(null);
+  };
+
+  const saveUser = () => {
+    const res = addUser(userForm);
+    if (res.ok) setUserForm(null);
+    else alert(res.error);
   };
 
   const handleCoverUpload = (e) => {
@@ -96,31 +142,37 @@ export default function AdminPanel() {
     reader.readAsDataURL(file);
   };
 
+  const handleAddCode = () => {
+    if (!newCodeForm.code.trim() || !newCodeForm.pct) return;
+    addDiscountCode(newCodeForm.code.trim(), newCodeForm.pct);
+    setCodeMsg(`کد ${newCodeForm.code.toUpperCase()} با ${newCodeForm.pct}٪ تخفیف افزوده شد`);
+    setNewCodeForm({ code: '', pct: '' });
+    setTimeout(() => setCodeMsg(''), 3000);
+  };
+
+  const customerUsers = users.filter(u => u.role === 'customer');
+
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg)', direction: 'rtl', display: 'flex' }}>
       {/* Sidebar */}
-      <aside style={{ width: 220, background: 'var(--dark)', position: 'sticky', top: 0, height: '100vh', display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+      <aside style={{ width: 220, background: 'var(--dark)', position: 'sticky', top: 0, height: '100vh', display: 'flex', flexDirection: 'column', flexShrink: 0, overflowY: 'auto' }}>
         <div style={{ padding: '20px 16px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-            <div style={{ background: 'var(--primary)', padding: '5px 6px', display: 'flex' }}>
-              <SettingsIcon size={14} />
-            </div>
+            <div style={{ background: 'var(--primary)', padding: '5px 6px', display: 'flex' }}><SettingsIcon size={14} /></div>
             <p style={{ fontSize: 14, fontWeight: 800, color: '#fff' }}>پنل مدیریت</p>
           </div>
           <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 4, marginRight: 30 }}>{user.name}</p>
         </div>
         <nav style={{ flex: 1, padding: 12 }}>
           {nav.map(n => (
-            <button key={n.id} onClick={() => { setTab(n.id); setBookForm(null); setPostForm(null); }} style={{
+            <button key={n.id} onClick={() => { setTab(n.id); setBookForm(null); setPostForm(null); setUserForm(null); }} style={{
               width: '100%', display: 'flex', alignItems: 'center', gap: 10,
               padding: '10px 12px', border: 'none', cursor: 'pointer',
               background: tab === n.id ? 'rgba(255,255,255,0.12)' : 'transparent',
               color: tab === n.id ? '#fff' : 'rgba(255,255,255,0.5)',
               fontSize: 13, fontWeight: tab === n.id ? 700 : 400, marginBottom: 4, textAlign: 'right',
               borderRight: tab === n.id ? '3px solid var(--primary)' : '3px solid transparent',
-            }}>
-              <span>{n.icon}</span> {n.label}
-            </button>
+            }}><span>{n.icon}</span> {n.label}</button>
           ))}
         </nav>
         <div style={{ padding: 12, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
@@ -140,12 +192,34 @@ export default function AdminPanel() {
         {tab === 'dashboard' && (
           <div className="fade-in">
             <h1 style={{ fontSize: 22, fontWeight: 800, marginBottom: 24, color: 'var(--text)' }}>داشبورد</h1>
+
+            {/* Festival toggle */}
+            <div style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', padding: '16px 20px', marginBottom: 24, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+              <div>
+                <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>بنر جشنواره قیمت</p>
+                <p style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>نمایش تایمر شمارش معکوس در بالای صفحه</p>
+              </div>
+              <button onClick={() => setFestivalEnabled(p => !p)} style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                background: festivalEnabled ? 'var(--primary)' : 'var(--bg)',
+                color: festivalEnabled ? '#fff' : 'var(--text-2)',
+                border: `2px solid ${festivalEnabled ? 'var(--primary)' : 'var(--border)'}`,
+                padding: '9px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s',
+              }}>
+                <div style={{ width: 36, height: 20, background: festivalEnabled ? 'rgba(255,255,255,0.3)' : 'var(--border)', borderRadius: 10, position: 'relative', transition: 'background 0.2s' }}>
+                  <div style={{ position: 'absolute', top: 2, right: festivalEnabled ? 2 : 18, width: 16, height: 16, background: festivalEnabled ? '#fff' : 'var(--text-3)', borderRadius: '50%', transition: 'right 0.2s' }} />
+                </div>
+                {festivalEnabled ? 'فعال است' : 'غیرفعال'}
+              </button>
+            </div>
+
+            {/* Stats */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 16, marginBottom: 28 }}>
               {[
                 { icon: <BookOpenIcon size={22} />, value: books.length, label: 'کتاب', color: 'var(--primary-light)', tc: 'var(--primary)' },
                 { icon: <FileTextIcon size={22} />, value: posts.length, label: 'مقاله بلاگ', color: '#FEF3C7', tc: '#B45309' },
-                { icon: <CheckIcon size={22} />, value: books.filter(b => b.featured).length, label: 'کتاب ویژه', color: '#D1FAE5', tc: '#059669' },
-                { icon: <UsersIcon size={22} />, value: users.filter(u => u.role === 'customer').length, label: 'کاربر', color: '#EDE9FE', tc: '#7C3AED' },
+                { icon: <UsersIcon size={22} />, value: customerUsers.length, label: 'کاربر', color: '#EDE9FE', tc: '#7C3AED' },
+                { icon: <CheckIcon size={22} />, value: users.reduce((s, u) => s + (u.purchasedBooks?.length || 0), 0), label: 'خرید کل', color: '#D1FAE5', tc: '#059669' },
               ].map(s => (
                 <div key={s.label} style={{ background: s.color, border: `1.5px solid ${s.tc}22`, padding: 20 }}>
                   <div style={{ color: s.tc, marginBottom: 10 }}>{s.icon}</div>
@@ -161,93 +235,32 @@ export default function AdminPanel() {
                 {books.slice(-4).reverse().map(b => (
                   <div key={b.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
                     <div style={{ width: 32, height: 42, overflow: 'hidden', background: 'var(--primary-light)', flexShrink: 0 }}>
-                      <img src={b.cover} alt={b.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => e.target.style.display = 'none'} />
+                      <img src={b.cover} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => e.target.style.display = 'none'} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }} className="clamp-1">{b.title}</p>
                       <p style={{ fontSize: 11, color: 'var(--text-3)' }}>{b.price?.toLocaleString('fa-IR')} ت</p>
                     </div>
-                    <button onClick={() => { setTab('books'); setBookForm(b); }} style={{ fontSize: 11, color: 'var(--primary)', background: 'var(--primary-light)', border: 'none', padding: '3px 8px', cursor: 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 3 }}><EditIcon size={10} /> ویرایش</button>
+                    <button onClick={() => { setTab('books'); setBookForm({ ...b, tags: (b.tags || []).join(', ') }); }} style={{ fontSize: 11, color: 'var(--primary)', background: 'var(--primary-light)', border: 'none', padding: '3px 8px', cursor: 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 3 }}><EditIcon size={10} /> ویرایش</button>
                   </div>
                 ))}
               </div>
               <div style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', padding: 20 }}>
                 <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 14, color: 'var(--text)' }}>آخرین کاربران</h3>
-                {users.filter(u => u.role === 'customer').slice(-4).reverse().map(u => (
-                  <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
-                    <div style={{ width: 32, height: 32, background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', fontSize: 13, fontWeight: 800, flexShrink: 0 }}>
-                      {u.name[0]}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{u.name}</p>
-                      <p style={{ fontSize: 11, color: 'var(--text-3)' }}>{u.purchasedBooks?.length || 0} کتاب</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* STATS */}
-        {tab === 'stats' && (
-          <div className="fade-in">
-            <h1 style={{ fontSize: 22, fontWeight: 800, marginBottom: 24, color: 'var(--text)' }}>آمار فروش</h1>
-            <SalesChart books={books} users={users} />
-            <div style={{ marginTop: 24, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }}>
-              {books.sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 4).map((book, i) => (
-                <div key={book.id} style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', padding: 16, display: 'flex', gap: 12, alignItems: 'center' }}>
-                  <span style={{ fontSize: 18, fontWeight: 900, color: 'var(--primary)', minWidth: 24 }}>#{i + 1}</span>
-                  <div style={{ width: 36, height: 48, background: 'var(--primary-light)', overflow: 'hidden', flexShrink: 0 }}>
-                    <img src={book.cover} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => e.target.style.display = 'none'} />
-                  </div>
-                  <div style={{ minWidth: 0 }}>
-                    <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)' }} className="clamp-2">{book.title}</p>
-                    <p style={{ fontSize: 11, color: 'var(--text-3)' }}>امتیاز: {book.rating}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* USERS */}
-        {tab === 'users' && (
-          <div className="fade-in">
-            <h1 style={{ fontSize: 22, fontWeight: 800, marginBottom: 4, color: 'var(--text)' }}>مدیریت کاربران</h1>
-            <p style={{ color: 'var(--text-3)', marginBottom: 24, fontSize: 13 }}>{users.length} کاربر ثبت‌نام کرده</p>
-            <div style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', overflow: 'hidden' }}>
-              {/* Header */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 100px 120px', gap: 12, padding: '10px 16px', background: 'var(--bg)', borderBottom: '1.5px solid var(--border)', fontSize: 12, fontWeight: 700, color: 'var(--text-3)' }}>
-                <span>نام</span><span>ایمیل</span><span>نقش</span><span>کتاب خریداری</span>
-              </div>
-              {users.map((u, i) => (
-                <div key={u.id} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 100px 120px', gap: 12, padding: '12px 16px', borderBottom: i < users.length - 1 ? '1px solid var(--border)' : 'none', alignItems: 'center' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{ width: 32, height: 32, background: u.role === 'admin' ? '#1D4ED8' : 'var(--primary-light)', color: u.role === 'admin' ? '#fff' : 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 800, flexShrink: 0 }}>
-                      {u.name[0]}
-                    </div>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{u.name}</span>
-                  </div>
-                  <span style={{ fontSize: 12, color: 'var(--text-3)', direction: 'ltr', textAlign: 'right' }}>{u.email}</span>
-                  <span style={{ padding: '3px 8px', fontSize: 11, fontWeight: 700, background: u.role === 'admin' ? '#EEF2FF' : 'var(--primary-light)', color: u.role === 'admin' ? '#1D4ED8' : 'var(--primary)', display: 'inline-block' }}>
-                    {u.role === 'admin' ? 'مدیر' : 'کاربر'}
-                  </span>
-                  <div>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{u.purchasedBooks?.length || 0}</span>
-                    <span style={{ fontSize: 11, color: 'var(--text-3)', marginRight: 4 }}>کتاب</span>
-                    {u.purchasedBooks?.length > 0 && (
-                      <div style={{ display: 'flex', gap: 2, marginTop: 3, flexWrap: 'wrap' }}>
-                        {u.purchasedBooks.slice(0, 3).map(bid => {
-                          const b = books.find(x => x.id === bid);
-                          return b ? <span key={bid} style={{ fontSize: 9, background: 'var(--bg)', padding: '1px 5px', color: 'var(--text-3)' }} className="clamp-1">{b.title}</span> : null;
-                        })}
-                        {u.purchasedBooks.length > 3 && <span style={{ fontSize: 9, color: 'var(--text-3)' }}>+{u.purchasedBooks.length - 3}</span>}
+                {customerUsers.slice(-4).reverse().map(u => {
+                  const grp = getUserGroup(u);
+                  return (
+                    <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
+                      <div style={{ width: 32, height: 32, background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)', fontSize: 13, fontWeight: 800, flexShrink: 0 }}>{u.name[0]}</div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{u.name}</p>
+                        <p style={{ fontSize: 11, color: 'var(--text-3)' }}>{u.purchasedBooks?.length || 0} کتاب</p>
                       </div>
-                    )}
-                  </div>
-                </div>
-              ))}
+                      {grp && <span style={{ fontSize: 10, padding: '2px 8px', fontWeight: 700, background: grp.color + '20', color: grp.color }}>{grp.name.split(' ')[1]}</span>}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         )}
@@ -260,13 +273,13 @@ export default function AdminPanel() {
                 <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)' }}>مدیریت کتاب‌ها</h1>
                 <p style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 2 }}>{books.length} کتاب ثبت شده</p>
               </div>
-              <button onClick={() => setBookForm(EMPTY_BOOK)} style={{ background: 'var(--primary)', color: '#fff', border: 'none', padding: '10px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}><PlusIcon size={14} /> کتاب جدید</button>
+              <button onClick={() => setBookForm({ ...EMPTY_BOOK, category: bookCategories[0] || '' })} style={{ background: 'var(--primary)', color: '#fff', border: 'none', padding: '10px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}><PlusIcon size={14} /> کتاب جدید</button>
             </div>
             <div style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', overflow: 'hidden' }}>
               {books.map((b, i) => (
                 <div key={b.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 20px', borderBottom: i < books.length - 1 ? '1px solid var(--border)' : 'none' }}>
                   <div style={{ width: 40, height: 52, overflow: 'hidden', background: 'var(--primary-light)', flexShrink: 0 }}>
-                    <img src={b.cover} alt={b.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => e.target.style.display = 'none'} />
+                    <img src={b.cover} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => e.target.style.display = 'none'} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }} className="clamp-1">{b.title}</p>
@@ -297,7 +310,7 @@ export default function AdminPanel() {
               <AF label="مترجم" value={bookForm.translator} onChange={setB('translator')} />
               <AF label="قیمت (تومان) *" value={bookForm.price} onChange={setB('price')} type="number" required />
               <AF label="قیمت اصلی (قبل از تخفیف)" value={bookForm.originalPrice} onChange={setB('originalPrice')} type="number" />
-              <AF label="دسته‌بندی" value={bookForm.category} onChange={setB('category')} type="select" options={['رمان کلاسیک','رمان معاصر','فانتزی','کلاسیک','ادبیات فارسی','علمی-تخیلی','رمان تاریخی']} />
+              <AF label="دسته‌بندی" value={bookForm.category} onChange={setB('category')} type="select" options={bookCategories} />
               {/* Cover upload */}
               <div style={{ gridColumn: '1/-1' }}>
                 <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 8, color: 'var(--text-2)' }}>تصویر جلد</label>
@@ -308,16 +321,14 @@ export default function AdminPanel() {
                     </div>
                   )}
                   <div style={{ flex: 1, minWidth: 200 }}>
-                    <button type="button" onClick={() => coverInputRef.current?.click()} style={{
-                      display: 'flex', alignItems: 'center', gap: 8, padding: '9px 16px',
-                      background: 'var(--primary-light)', color: 'var(--primary)', border: '1.5px dashed var(--primary)',
-                      cursor: 'pointer', fontSize: 13, fontWeight: 600, marginBottom: 8, width: '100%', justifyContent: 'center',
-                    }}>
+                    <button type="button" onClick={() => coverInputRef.current?.click()} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 16px', background: 'var(--primary-light)', color: 'var(--primary)', border: '1.5px dashed var(--primary)', cursor: 'pointer', fontSize: 13, fontWeight: 600, marginBottom: 8, width: '100%', justifyContent: 'center' }}>
                       <UploadIcon size={15} /> آپلود تصویر از کامپیوتر
                     </button>
                     <input ref={coverInputRef} type="file" accept="image/*" onChange={handleCoverUpload} style={{ display: 'none' }} />
                     <p style={{ fontSize: 11, color: 'var(--text-3)', marginBottom: 6, textAlign: 'center' }}>یا آدرس اینترنتی:</p>
-                    <input type="text" value={typeof bookForm.cover === 'string' && !bookForm.cover.startsWith('data:') ? bookForm.cover : ''} onChange={setB('cover')} placeholder="https://example.com/cover.jpg"
+                    <input type="text"
+                      value={typeof bookForm.cover === 'string' && !bookForm.cover.startsWith('data:') ? bookForm.cover : ''}
+                      onChange={setB('cover')} placeholder="https://example.com/cover.jpg"
                       style={{ width: '100%', padding: '8px 12px', border: '1.5px solid var(--border)', fontSize: 13, background: 'var(--surface)', color: 'var(--text)', outline: 'none', direction: 'ltr' }}
                     />
                   </div>
@@ -336,12 +347,7 @@ export default function AdminPanel() {
                 </label>
               </div>
               <div style={{ gridColumn: '1/-1' }}>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6, color: 'var(--text-2)' }}>
-                  محتوای کتاب (HTML) — این محتوا در ریدر نمایش داده می‌شود
-                </label>
-                <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', padding: '8px 12px', marginBottom: 6, fontSize: 12, color: 'var(--text-3)' }}>
-                  می‌توانید HTML کامل صفحات کتاب را اینجا وارد کنید: &lt;h2&gt;فصل اول&lt;/h2&gt;&lt;p&gt;متن...&lt;/p&gt;
-                </div>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6, color: 'var(--text-2)' }}>محتوای کتاب (HTML)</label>
                 <textarea value={bookForm.sampleContent} onChange={setB('sampleContent')} rows={10}
                   placeholder="<h2>فصل اول</h2>&#10;<p>متن کتاب را اینجا بنویسید...</p>"
                   style={{ width: '100%', padding: '12px', border: '2px solid var(--border)', fontSize: 13, resize: 'vertical', fontFamily: 'monospace', direction: 'ltr', outline: 'none', background: 'var(--surface)', color: 'var(--text)' }}
@@ -367,13 +373,13 @@ export default function AdminPanel() {
                 <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)' }}>مدیریت بلاگ</h1>
                 <p style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 2 }}>{posts.length} مقاله</p>
               </div>
-              <button onClick={() => setPostForm(EMPTY_POST)} style={{ background: 'var(--primary)', color: '#fff', border: 'none', padding: '10px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}><PlusIcon size={14} /> مقاله جدید</button>
+              <button onClick={() => setPostForm({ ...EMPTY_POST, category: postCategories[0] || '' })} style={{ background: 'var(--primary)', color: '#fff', border: 'none', padding: '10px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}><PlusIcon size={14} /> مقاله جدید</button>
             </div>
             <div style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', overflow: 'hidden' }}>
               {posts.map((p, i) => (
                 <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 20px', borderBottom: i < posts.length - 1 ? '1px solid var(--border)' : 'none' }}>
                   <div style={{ width: 60, height: 40, overflow: 'hidden', background: 'var(--bg)', flexShrink: 0 }}>
-                    <img src={p.cover} alt={p.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => e.target.style.display = 'none'} />
+                    <img src={p.cover} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => e.target.style.display = 'none'} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }} className="clamp-1">{p.title}</p>
@@ -399,7 +405,7 @@ export default function AdminPanel() {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
               <AF label="عنوان مقاله *" value={postForm.title} onChange={setP('title')} span={2} required />
               <AF label="آدرس (slug)" value={postForm.slug} onChange={setP('slug')} />
-              <AF label="دسته‌بندی" value={postForm.category} onChange={setP('category')} type="select" options={['راهنما','معرفی کتاب','سبک زندگی','اخبار']} />
+              <AF label="دسته‌بندی" value={postForm.category} onChange={setP('category')} type="select" options={postCategories} />
               <AF label="نویسنده" value={postForm.author} onChange={setP('author')} />
               <AF label="زمان مطالعه (دقیقه)" value={postForm.readTime} onChange={setP('readTime')} type="number" />
               <AF label="آدرس تصویر شاخص" value={postForm.cover} onChange={setP('cover')} span={2} />
@@ -421,6 +427,203 @@ export default function AdminPanel() {
             </div>
           </div>
         )}
+
+        {/* USERS */}
+        {tab === 'users' && (
+          <div className="fade-in">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+              <div>
+                <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)' }}>مدیریت کاربران</h1>
+                <p style={{ color: 'var(--text-3)', marginTop: 2, fontSize: 13 }}>{users.length} کاربر</p>
+              </div>
+              <button onClick={() => setUserForm({ ...EMPTY_USER })} style={{ background: 'var(--primary)', color: '#fff', border: 'none', padding: '10px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <PlusIcon size={14} /> کاربر جدید
+              </button>
+            </div>
+
+            {/* Add user form */}
+            {userForm && (
+              <div style={{ background: 'var(--surface)', border: '1.5px solid var(--primary)', padding: 20, marginBottom: 24 }}>
+                <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16, color: 'var(--text)' }}>افزودن کاربر جدید</h3>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                  <AF label="نام کامل *" value={userForm.name} onChange={setU('name')} required />
+                  <AF label="ایمیل *" value={userForm.email} onChange={setU('email')} required />
+                  <AF label="رمز عبور *" value={userForm.password} onChange={setU('password')} />
+                  <AF label="نقش" value={userForm.role} onChange={setU('role')} type="select" options={['customer', 'admin']} />
+                </div>
+                <div style={{ display: 'flex', gap: 10, marginTop: 14 }}>
+                  <button onClick={saveUser} style={{ background: 'var(--primary)', color: '#fff', border: 'none', padding: '9px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}><CheckIcon size={14} /> ذخیره</button>
+                  <button onClick={() => setUserForm(null)} style={{ background: 'var(--bg)', color: 'var(--text-2)', border: '1px solid var(--border)', padding: '9px 16px', fontSize: 13, cursor: 'pointer' }}>انصراف</button>
+                </div>
+              </div>
+            )}
+
+            <div style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', overflow: 'hidden' }}>
+              {/* Table header */}
+              <div style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 80px 100px 130px 80px', gap: 8, padding: '10px 16px', background: 'var(--bg)', borderBottom: '1.5px solid var(--border)', fontSize: 11, fontWeight: 700, color: 'var(--text-3)' }}>
+                <span>نام / ایمیل</span><span>تاریخ عضویت</span><span>نقش</span><span>کتاب‌ها</span><span>پرداخت کل</span><span>عملیات</span>
+              </div>
+              {users.map((u, i) => {
+                const grp = getUserGroup(u);
+                const spending = getUserSpending(u);
+                return (
+                  <div key={u.id} style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 80px 100px 130px 80px', gap: 8, padding: '12px 16px', borderBottom: i < users.length - 1 ? '1px solid var(--border)' : 'none', alignItems: 'center' }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ width: 30, height: 30, background: u.role === 'admin' ? '#1D4ED8' : 'var(--primary-light)', color: u.role === 'admin' ? '#fff' : 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, flexShrink: 0 }}>{u.name[0]}</div>
+                        <div>
+                          <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{u.name}</p>
+                          <p style={{ fontSize: 11, color: 'var(--text-3)', direction: 'ltr', textAlign: 'right' }}>{u.email}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <span style={{ fontSize: 12, color: 'var(--text-3)' }}>{u.joinDate || '—'}</span>
+                    <span style={{ padding: '2px 8px', fontSize: 11, fontWeight: 700, background: u.role === 'admin' ? '#EEF2FF' : 'var(--primary-light)', color: u.role === 'admin' ? '#1D4ED8' : 'var(--primary)', display: 'inline-block', textAlign: 'center' }}>
+                      {u.role === 'admin' ? 'مدیر' : 'کاربر'}
+                    </span>
+                    <div>
+                      <p style={{ fontSize: 14, fontWeight: 800, color: 'var(--text)' }}>{u.purchasedBooks?.length || 0}</p>
+                      {grp && <p style={{ fontSize: 10, color: grp.color, fontWeight: 700, marginTop: 2 }}>{grp.name}</p>}
+                    </div>
+                    <div>
+                      <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--primary)' }}>{spending.toLocaleString('fa-IR')} ت</p>
+                    </div>
+                    <div>
+                      {u.role !== 'admin' && (
+                        <button onClick={() => setConfirmDel({ type: 'user', id: u.id, name: u.name })} style={{ background: '#FEF2F2', color: '#DC2626', border: 'none', padding: '4px 10px', cursor: 'pointer', fontSize: 11, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 3 }}>
+                          <TrashIcon size={10} /> حذف
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* CUSTOMER CLUB */}
+        {tab === 'club' && (
+          <div className="fade-in">
+            <h1 style={{ fontSize: 22, fontWeight: 800, marginBottom: 4, color: 'var(--text)' }}>باشگاه مشتریان</h1>
+            <p style={{ color: 'var(--text-3)', marginBottom: 28, fontSize: 13 }}>تعریف گروه‌های مشتری، مدیریت تخفیف‌ها و آمار گروه‌ها</p>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+              {/* Groups */}
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                  <h2 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>گروه‌های مشتری</h2>
+                  <button onClick={() => setGroupForm({ name: '', color: '#0F766E', minBooks: 0, maxBooks: 999, description: '' })} style={{ background: 'var(--primary)', color: '#fff', border: 'none', padding: '7px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <PlusIcon size={12} /> گروه جدید
+                  </button>
+                </div>
+
+                {groupForm && (
+                  <div style={{ background: 'var(--surface)', border: '1.5px solid var(--primary)', padding: 16, marginBottom: 16 }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      <input value={groupForm.name} onChange={e => setGroupForm(p => ({ ...p, name: e.target.value }))} placeholder="نام گروه (مثلاً: مشتریان طلایی)" style={{ padding: '8px 12px', border: '1.5px solid var(--border)', fontSize: 13, background: 'var(--surface)', color: 'var(--text)', outline: 'none' }} />
+                      <input value={groupForm.description} onChange={e => setGroupForm(p => ({ ...p, description: e.target.value }))} placeholder="توضیح گروه" style={{ padding: '8px 12px', border: '1.5px solid var(--border)', fontSize: 13, background: 'var(--surface)', color: 'var(--text)', outline: 'none' }} />
+                      <div style={{ display: 'flex', gap: 10 }}>
+                        <input type="number" value={groupForm.minBooks} onChange={e => setGroupForm(p => ({ ...p, minBooks: Number(e.target.value) }))} placeholder="حداقل کتاب" style={{ flex: 1, padding: '8px 12px', border: '1.5px solid var(--border)', fontSize: 13, background: 'var(--surface)', color: 'var(--text)', outline: 'none' }} />
+                        <input type="number" value={groupForm.maxBooks} onChange={e => setGroupForm(p => ({ ...p, maxBooks: Number(e.target.value) }))} placeholder="حداکثر کتاب" style={{ flex: 1, padding: '8px 12px', border: '1.5px solid var(--border)', fontSize: 13, background: 'var(--surface)', color: 'var(--text)', outline: 'none' }} />
+                        <input type="color" value={groupForm.color} onChange={e => setGroupForm(p => ({ ...p, color: e.target.value }))} style={{ width: 44, height: 38, padding: 2, border: '1.5px solid var(--border)', cursor: 'pointer' }} />
+                      </div>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button onClick={() => { if (groupForm.id) updateCustomerGroup(groupForm); else addCustomerGroup(groupForm); setGroupForm(null); }} style={{ background: 'var(--primary)', color: '#fff', border: 'none', padding: '8px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}><CheckIcon size={13} /> ذخیره</button>
+                        <button onClick={() => setGroupForm(null)} style={{ background: 'var(--bg)', border: '1px solid var(--border)', padding: '8px 12px', fontSize: 13, cursor: 'pointer', color: 'var(--text-2)' }}>انصراف</button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {customerGroups.map(g => {
+                    const count = customerUsers.filter(u => (u.purchasedBooks?.length || 0) >= g.minBooks && (u.purchasedBooks?.length || 0) <= g.maxBooks).length;
+                    return (
+                      <div key={g.id} style={{ background: 'var(--surface)', border: `1.5px solid ${g.color}33`, padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <div style={{ width: 12, height: 12, background: g.color, flexShrink: 0 }} />
+                        <div style={{ flex: 1 }}>
+                          <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>{g.name}</p>
+                          <p style={{ fontSize: 12, color: 'var(--text-3)' }}>{g.description} · {g.minBooks}–{g.maxBooks === 999 ? '∞' : g.maxBooks} کتاب</p>
+                        </div>
+                        <div style={{ background: g.color + '20', color: g.color, padding: '4px 10px', fontSize: 13, fontWeight: 800 }}>{count} نفر</div>
+                        <button onClick={() => setGroupForm({ ...g })} style={{ background: 'var(--bg)', border: 'none', cursor: 'pointer', color: 'var(--text-3)', padding: 4 }}><EditIcon size={13} /></button>
+                        <button onClick={() => deleteCustomerGroup(g.id)} style={{ background: 'var(--bg)', border: 'none', cursor: 'pointer', color: 'var(--red)', padding: 4 }}><TrashIcon size={13} /></button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Discount code generator */}
+              <div>
+                <h2 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 16 }}>مدیریت کدهای تخفیف</h2>
+                <div style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', padding: 20, marginBottom: 16 }}>
+                  <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)', marginBottom: 10 }}>ایجاد کد تخفیف جدید</p>
+                  <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                    <input value={newCodeForm.code} onChange={e => setNewCodeForm(p => ({ ...p, code: e.target.value.toUpperCase() }))} placeholder="کد تخفیف (مثلاً: SUMMER30)" style={{ flex: 2, padding: '9px 12px', border: '1.5px solid var(--border)', fontSize: 13, background: 'var(--surface)', color: 'var(--text)', outline: 'none', direction: 'ltr' }} />
+                    <input type="number" value={newCodeForm.pct} onChange={e => setNewCodeForm(p => ({ ...p, pct: e.target.value }))} placeholder="درصد %" style={{ flex: 1, padding: '9px 12px', border: '1.5px solid var(--border)', fontSize: 13, background: 'var(--surface)', color: 'var(--text)', outline: 'none' }} />
+                    <button onClick={handleAddCode} style={{ background: 'var(--primary)', color: '#fff', border: 'none', padding: '9px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5 }}>
+                      <PlusIcon size={13} /> ساخت
+                    </button>
+                  </div>
+                  {codeMsg && <p style={{ fontSize: 12, color: 'var(--green)', fontWeight: 600 }}><CheckIcon size={12} /> {codeMsg}</p>}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {Object.entries(discountCodes).map(([code, pct]) => (
+                    <div key={code} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', background: 'var(--surface)', border: '1.5px solid var(--border)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <TagIcon size={14} />
+                        <span style={{ fontSize: 14, fontWeight: 800, direction: 'ltr', color: 'var(--text)' }}>{code}</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--primary)' }}>{pct}%</span>
+                        <button onClick={() => removeDiscountCode(code)} style={{ background: '#FEF2F2', color: '#DC2626', border: 'none', padding: '4px 10px', cursor: 'pointer', fontSize: 11, fontWeight: 600 }}>حذف</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* STATS */}
+        {tab === 'stats' && (
+          <div className="fade-in">
+            <h1 style={{ fontSize: 22, fontWeight: 800, marginBottom: 24, color: 'var(--text)' }}>آمار</h1>
+            <SalesChart books={books} users={users} />
+            <div style={{ marginTop: 24, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }}>
+              {books.sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 4).map((book, i) => (
+                <div key={book.id} style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', padding: 16, display: 'flex', gap: 12, alignItems: 'center' }}>
+                  <span style={{ fontSize: 18, fontWeight: 900, color: 'var(--primary)', minWidth: 24 }}>#{i + 1}</span>
+                  <div style={{ width: 36, height: 48, background: 'var(--primary-light)', overflow: 'hidden', flexShrink: 0 }}>
+                    <img src={book.cover} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => e.target.style.display = 'none'} />
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <p style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)' }} className="clamp-2">{book.title}</p>
+                    <p style={{ fontSize: 11, color: 'var(--text-3)' }}>امتیاز: {book.rating}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* SETTINGS */}
+        {tab === 'settings' && (
+          <div className="fade-in">
+            <h1 style={{ fontSize: 22, fontWeight: 800, marginBottom: 24, color: 'var(--text)' }}>تنظیمات</h1>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+              <div style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', padding: 24 }}>
+                <CategoryManager categories={bookCategories} onAdd={addBookCategory} onRemove={removeBookCategory} label="دسته‌بندی‌های کتاب" />
+              </div>
+              <div style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', padding: 24 }}>
+                <CategoryManager categories={postCategories} onAdd={addPostCategory} onRemove={removePostCategory} label="دسته‌بندی‌های بلاگ" />
+              </div>
+            </div>
+          </div>
+        )}
       </main>
 
       {/* Delete confirm */}
@@ -429,11 +632,18 @@ export default function AdminPanel() {
           <div onClick={() => setConfirmDel(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 300 }} />
           <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', background: 'var(--surface)', padding: 28, zIndex: 301, maxWidth: 360, width: '90%', textAlign: 'center', direction: 'rtl', border: '2px solid var(--dark)', boxShadow: '6px 6px 0 var(--dark)' }}>
             <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'center', color: 'var(--red)' }}><TrashIcon size={36} /></div>
-            <h3 style={{ fontSize: 17, fontWeight: 800, marginBottom: 8, color: 'var(--text)' }}>حذف {confirmDel.type === 'book' ? 'کتاب' : 'مقاله'}؟</h3>
+            <h3 style={{ fontSize: 17, fontWeight: 800, marginBottom: 8, color: 'var(--text)' }}>
+              حذف {confirmDel.type === 'book' ? 'کتاب' : confirmDel.type === 'post' ? 'مقاله' : 'کاربر'}؟
+            </h3>
             <p style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 20 }}>«{confirmDel.name}» حذف خواهد شد.</p>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
               <button onClick={() => setConfirmDel(null)} style={{ padding: '9px 20px', border: '1px solid var(--border)', background: 'var(--surface)', cursor: 'pointer', fontSize: 13, color: 'var(--text)' }}>انصراف</button>
-              <button onClick={() => { confirmDel.type === 'book' ? deleteBook(confirmDel.id) : deletePost(confirmDel.id); setConfirmDel(null); }} style={{ padding: '9px 20px', border: 'none', background: '#DC2626', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 700 }}>حذف کن</button>
+              <button onClick={() => {
+                if (confirmDel.type === 'book') deleteBook(confirmDel.id);
+                else if (confirmDel.type === 'post') deletePost(confirmDel.id);
+                else if (confirmDel.type === 'user') deleteUser(confirmDel.id);
+                setConfirmDel(null);
+              }} style={{ padding: '9px 20px', border: 'none', background: '#DC2626', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 700 }}>حذف کن</button>
             </div>
           </div>
         </>
