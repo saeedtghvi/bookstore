@@ -19,6 +19,34 @@ const DEFAULT_CUSTOMER_GROUPS = [
   { id: 3, name: 'مشتریان طلایی', color: '#D97706', minBooks: 6, maxBooks: 999, description: 'خریداران ویژه' },
 ];
 
+const DEFAULT_SITE_SETTINGS = {
+  // ─── هیرو صفحه اصلی ───
+  heroBadge: 'نسل جدید کتاب‌های دیجیتال',
+  heroTitle: 'کتاب‌های مورد علاقه‌تان را',
+  heroTitleAccent: 'با محیطی زیبا',
+  heroTitleEnd: 'بخوانید',
+  heroSubtitle: 'تجربه‌ای متفاوت از مطالعه — با امکانات پیشرفته، قیمتی کمتر از نسخه چاپی، و دسترسی فوری پس از خرید.',
+  heroDigitalBtn: 'کتاب‌های دیجیتال',
+  heroPhysicalBtn: 'کتاب‌های چاپی',
+  heroStat1: '۸+', heroStat1Label: 'کتاب دیجیتال',
+  heroStat2: '۲۴+', heroStat2Label: 'هزار خواننده',
+  heroStat3: '۴.۸', heroStat3Label: 'میانگین امتیاز',
+  // ─── بنر کتاب‌های چاپی ───
+  physicalTitle: 'کتاب‌های چاپی',
+  physicalTitleAccent: 'با بهترین وضعیت',
+  physicalSubtitle: 'کتاب‌های چاپی در چهار درجه کیفیت — نو، در حد نو، خوانده شده و بسیار خوانده شده. ارسال به سراسر کشور با بسته‌بندی استاندارد.',
+  physicalBtn: 'مشاهده کتاب‌های چاپی',
+  // ─── اطلاعات فروشگاه ───
+  siteName: 'کتاب‌خانه',
+  siteDesc: 'فروشگاه آنلاین کتاب‌های دیجیتال و چاپی',
+  siteEmail: '',
+  sitePhone: '',
+  siteAddress: '',
+  // ─── تنظیمات ارسال ───
+  shippingCost: 35000,
+  freeShippingMin: 500000,
+};
+
 function load(key, fallback) {
   try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
   catch { return fallback; }
@@ -50,6 +78,7 @@ export function AppProvider({ children }) {
   const [discountCodes, setDiscountCodes]     = useState(() => load('discountCodes', { 'BOOK20': 20, 'READ10': 10, 'HELLO15': 15 }));
   const [appliedDiscount, setAppliedDiscount] = useState(null);
   const [customerGroups, setCustomerGroups]   = useState(() => load('customerGroups', DEFAULT_CUSTOMER_GROUPS));
+  const [siteSettings, setSiteSettings]       = useState(() => ({ ...DEFAULT_SITE_SETTINGS, ...load('siteSettings', {}) }));
 
   useEffect(() => { save('user', user); },                     [user]);
   useEffect(() => { save('users', users); },                   [users]);
@@ -64,6 +93,7 @@ export function AppProvider({ children }) {
   useEffect(() => { save('postCategories', postCategories); }, [postCategories]);
   useEffect(() => { save('discountCodes', discountCodes); },   [discountCodes]);
   useEffect(() => { save('customerGroups', customerGroups); }, [customerGroups]);
+  useEffect(() => { save('siteSettings', siteSettings); },     [siteSettings]);
 
   // Auth
   const login = (email, password) => {
@@ -180,6 +210,44 @@ export function AppProvider({ children }) {
     }, 0);
   };
 
+  // Site settings
+  const updateSiteSettings = (partial) => setSiteSettings(prev => ({ ...prev, ...partial }));
+  const resetSiteSettings  = () => setSiteSettings(DEFAULT_SITE_SETTINGS);
+
+  // Bulk price update
+  const bulkUpdatePrices = ({ bookType, mode, amount, direction, priceField }) => {
+    // bookType: 'digital'|'physical'|'all'
+    // mode: 'percent'|'fixed'
+    // amount: number
+    // direction: 'increase'|'decrease'
+    // priceField: 'price'|'physicalPrice'|'originalPrice'
+    const sign = direction === 'increase' ? 1 : -1;
+    setBooks(prev => prev.map(book => {
+      const bType = book.type || 'digital';
+      const matches =
+        bookType === 'all' ||
+        (bookType === 'digital' && (bType === 'digital' || bType === 'both')) ||
+        (bookType === 'physical' && (bType === 'physical' || bType === 'both'));
+      if (!matches) return book;
+
+      const fields = priceField === 'both'
+        ? ['price', 'physicalPrice']
+        : [priceField || 'price'];
+
+      const updated = { ...book };
+      fields.forEach(f => {
+        if (f === 'physicalPrice' && !book.physicalPrice) return;
+        const cur = Number(book[f]) || 0;
+        if (!cur) return;
+        const newVal = mode === 'percent'
+          ? Math.round(cur * (1 + sign * amount / 100))
+          : Math.round(cur + sign * amount);
+        updated[f] = Math.max(0, newVal);
+      });
+      return updated;
+    }));
+  };
+
   // Books CRUD
   const addBook    = (book) => setBooks(prev => [...prev, { ...book, id: Date.now() }]);
   const updateBook = (book) => setBooks(prev => prev.map(b => b.id === book.id ? book : b));
@@ -207,6 +275,8 @@ export function AppProvider({ children }) {
       appliedDiscount, applyDiscount, removeDiscount, discountAmount, finalTotal,
       customerGroups, addCustomerGroup, updateCustomerGroup, deleteCustomerGroup,
       getUserGroup, getUserSpending,
+      siteSettings, updateSiteSettings, resetSiteSettings,
+      bulkUpdatePrices,
     }}>
       {children}
     </AppContext.Provider>

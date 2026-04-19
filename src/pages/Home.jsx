@@ -193,7 +193,8 @@ const CAT_COLORS = {
 };
 
 export default function Home() {
-  const { books, bookCategories } = useApp();
+  const { books, bookCategories, siteSettings } = useApp();
+  const s = siteSettings || {};
   const [cat, setCat] = useState('همه');
   const [sort, setSort] = useState('default');
   const [search, setSearch] = useState('');
@@ -245,27 +246,27 @@ export default function Home() {
           <div className="fade-in">
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(15,118,110,0.25)', border: '1px solid rgba(20,184,166,0.4)', padding: '5px 16px', marginBottom: 20 }}>
               <div style={{ width: 6, height: 6, background: 'var(--primary)', borderRadius: '50%', animation: 'pulse 2s infinite' }} />
-              <span style={{ fontSize: 13, fontWeight: 600, color: '#5EEAD4' }}>نسل جدید کتاب‌های دیجیتال</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: '#5EEAD4' }}>{s.heroBadge || 'نسل جدید کتاب‌های دیجیتال'}</span>
             </div>
             <h1 style={{ fontSize: 'clamp(28px,4.5vw,58px)', fontWeight: 900, lineHeight: 1.2, marginBottom: 20, letterSpacing: -1 }}>
-              کتاب‌های مورد علاقه‌تان را<br />
-              <span style={{ color: 'var(--primary)' }}>با محیطی زیبا</span> بخوانید
+              {s.heroTitle || 'کتاب‌های مورد علاقه‌تان را'}<br />
+              <span style={{ color: 'var(--primary)' }}>{s.heroTitleAccent || 'با محیطی زیبا'}</span> {s.heroTitleEnd || 'بخوانید'}
             </h1>
             <p style={{ fontSize: 'clamp(14px,2vw,16px)', color: 'rgba(255,255,255,0.6)', lineHeight: 2, maxWidth: 480, marginBottom: 32 }}>
-              تجربه‌ای متفاوت از مطالعه — با امکانات پیشرفته، قیمتی کمتر از نسخه چاپی، و دسترسی فوری پس از خرید.
+              {s.heroSubtitle || 'تجربه‌ای متفاوت از مطالعه — با امکانات پیشرفته، قیمتی کمتر از نسخه چاپی، و دسترسی فوری پس از خرید.'}
             </p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
               <Link to="/digital" style={{ background: 'var(--primary)', color: '#fff', padding: '13px 28px', fontSize: 15, fontWeight: 700, transition: 'background 0.2s', display: 'flex', alignItems: 'center', gap: 8 }}
                 onMouseEnter={e => e.currentTarget.style.background = 'var(--primary-2)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'var(--primary)'}
-              >کتاب‌های دیجیتال <ArrowRightIcon size={16} /></Link>
+              >{s.heroDigitalBtn || 'کتاب‌های دیجیتال'} <ArrowRightIcon size={16} /></Link>
               <Link to="/physical" style={{ background: 'rgba(255,255,255,0.08)', color: '#FEF3C7', padding: '13px 28px', fontSize: 15, fontWeight: 700, border: '1px solid rgba(254,243,199,0.3)', transition: 'background 0.2s', display: 'flex', alignItems: 'center', gap: 8 }}
                 onMouseEnter={e => e.currentTarget.style.background = 'rgba(146,64,14,0.4)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
-              >کتاب‌های چاپی <ArrowRightIcon size={16} /></Link>
+              >{s.heroPhysicalBtn || 'کتاب‌های چاپی'} <ArrowRightIcon size={16} /></Link>
             </div>
             <div style={{ display: 'flex', gap: 32, marginTop: 40, flexWrap: 'wrap' }}>
-              {[['۸+', 'کتاب دیجیتال'], ['۲۴+', 'هزار خواننده'], ['۴.۸', 'میانگین امتیاز']].map(([n, l]) => (
+              {[[s.heroStat1||'۸+', s.heroStat1Label||'کتاب دیجیتال'], [s.heroStat2||'۲۴+', s.heroStat2Label||'هزار خواننده'], [s.heroStat3||'۴.۸', s.heroStat3Label||'میانگین امتیاز']].map(([n, l]) => (
                 <div key={l}>
                   <div style={{ fontSize: 26, fontWeight: 900, color: 'var(--primary)' }}>{n}</div>
                   <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>{l}</div>
@@ -382,11 +383,11 @@ export default function Home() {
               <span style={{ fontSize: 12, fontWeight: 700, color: '#FCD34D' }}>جدید</span>
             </div>
             <h2 style={{ fontSize: 'clamp(22px,3vw,36px)', fontWeight: 900, color: '#fff', lineHeight: 1.3, marginBottom: 12 }}>
-              کتاب‌های چاپی<br />
-              <span style={{ color: '#FCD34D' }}>با بهترین وضعیت</span>
+              {s.physicalTitle || 'کتاب‌های چاپی'}<br />
+              <span style={{ color: '#FCD34D' }}>{s.physicalTitleAccent || 'با بهترین وضعیت'}</span>
             </h2>
             <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.55)', lineHeight: 1.9, maxWidth: 440, marginBottom: 28 }}>
-              کتاب‌های چاپی در چهار درجه کیفیت — نو، در حد نو، خوانده شده و بسیار خوانده شده. ارسال به سراسر کشور با بسته‌بندی استاندارد.
+              {s.physicalSubtitle || 'کتاب‌های چاپی در چهار درجه کیفیت — نو، در حد نو، خوانده شده و بسیار خوانده شده. ارسال به سراسر کشور با بسته‌بندی استاندارد.'}
             </p>
             <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 28 }}>
               {[['نو', '#059669'], ['در حد نو', '#0284C7'], ['خوانده شده', '#D97706'], ['بسیار خوانده شده', '#DC2626']].map(([label, color]) => (
@@ -399,7 +400,7 @@ export default function Home() {
             <Link to="/physical" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#92400E', color: '#FEF3C7', padding: '13px 28px', fontSize: 15, fontWeight: 700, transition: 'background 0.2s' }}
               onMouseEnter={e => e.currentTarget.style.background = '#78350F'}
               onMouseLeave={e => e.currentTarget.style.background = '#92400E'}
-            >مشاهده کتاب‌های چاپی <ArrowRightIcon size={16} /></Link>
+            >{s.physicalBtn || 'مشاهده کتاب‌های چاپی'} <ArrowRightIcon size={16} /></Link>
           </div>
           {/* Decorative book stack */}
           <div className="hide-mobile" style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>

@@ -88,6 +88,7 @@ export default function AdminPanel() {
     discountCodes, addDiscountCode, removeDiscountCode,
     customerGroups, addCustomerGroup, updateCustomerGroup, deleteCustomerGroup,
     getUserGroup, getUserSpending,
+    siteSettings, updateSiteSettings, resetSiteSettings, bulkUpdatePrices,
   } = useApp();
   const navigate = useNavigate();
   const [tab, setTab] = useState('dashboard');
@@ -99,6 +100,13 @@ export default function AdminPanel() {
   const [newCodeForm, setNewCodeForm] = useState({ code: '', pct: '' });
   const [codeMsg, setCodeMsg] = useState('');
   const coverInputRef = useRef(null);
+  const [settingsSection, setSettingsSection] = useState('bulk');
+  const [bulkForm, setBulkForm] = useState({ bookType: 'digital', mode: 'percent', amount: '', direction: 'increase', priceField: 'price' });
+  const [bulkDone, setBulkDone] = useState('');
+  const [landingForm, setLandingForm] = useState(null);
+  const [storeForm, setStoreForm] = useState(null);
+  const [shipForm, setShipForm] = useState(null);
+  const [settingsSaved, setSettingsSaved] = useState('');
 
   const nav = [
     { id: 'dashboard',  icon: <HomeIcon size={16} />,      label: 'داشبورد' },
@@ -623,15 +631,249 @@ export default function AdminPanel() {
         {/* SETTINGS */}
         {tab === 'settings' && (
           <div className="fade-in">
-            <h1 style={{ fontSize: 22, fontWeight: 800, marginBottom: 24, color: 'var(--text)' }}>تنظیمات</h1>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-              <div style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', padding: 24 }}>
-                <CategoryManager categories={bookCategories} onAdd={addBookCategory} onRemove={removeBookCategory} label="دسته‌بندی‌های کتاب" />
-              </div>
-              <div style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', padding: 24 }}>
-                <CategoryManager categories={postCategories} onAdd={addPostCategory} onRemove={removePostCategory} label="دسته‌بندی‌های بلاگ" />
-              </div>
+            <h1 style={{ fontSize: 22, fontWeight: 800, marginBottom: 20, color: 'var(--text)' }}>تنظیمات</h1>
+
+            {/* Sub-nav */}
+            <div style={{ display: 'flex', gap: 4, marginBottom: 28, borderBottom: '2px solid var(--border)', paddingBottom: 0, flexWrap: 'wrap' }}>
+              {[
+                ['bulk', 'تغییر قیمت گروهی'],
+                ['landing', 'محتوای لندینگ‌ها'],
+                ['store', 'اطلاعات فروشگاه'],
+                ['shipping', 'تنظیمات ارسال'],
+                ['categories', 'دسته‌بندی‌ها'],
+              ].map(([id, label]) => (
+                <button key={id} onClick={() => setSettingsSection(id)} style={{
+                  padding: '9px 18px', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700,
+                  background: settingsSection === id ? 'var(--primary)' : 'var(--surface)',
+                  color: settingsSection === id ? '#fff' : 'var(--text-2)',
+                  borderBottom: settingsSection === id ? '2px solid var(--primary)' : '2px solid transparent',
+                  marginBottom: -2,
+                }}>{label}</button>
+              ))}
             </div>
+
+            {/* ── تغییر قیمت گروهی ── */}
+            {settingsSection === 'bulk' && (
+              <div>
+                <p style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 20 }}>قیمت کتاب‌ها را به صورت دسته‌جمعی کاهش یا افزایش دهید.</p>
+                <div style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', padding: 24, maxWidth: 560 }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-2)', marginBottom: 6 }}>نوع کتاب</label>
+                      <select value={bulkForm.bookType} onChange={e => setBulkForm(p => ({ ...p, bookType: e.target.value }))}
+                        style={{ width: '100%', padding: '9px 12px', border: '1.5px solid var(--border)', fontSize: 13, background: 'var(--surface)', color: 'var(--text)', outline: 'none' }}>
+                        <option value="digital">دیجیتال</option>
+                        <option value="physical">چاپی</option>
+                        <option value="all">همه کتاب‌ها</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-2)', marginBottom: 6 }}>فیلد قیمت</label>
+                      <select value={bulkForm.priceField} onChange={e => setBulkForm(p => ({ ...p, priceField: e.target.value }))}
+                        style={{ width: '100%', padding: '9px 12px', border: '1.5px solid var(--border)', fontSize: 13, background: 'var(--surface)', color: 'var(--text)', outline: 'none' }}>
+                        <option value="price">قیمت فروش</option>
+                        <option value="originalPrice">قیمت اصلی (قبل از تخفیف)</option>
+                        <option value="physicalPrice">قیمت چاپی</option>
+                        <option value="both">قیمت فروش + چاپی</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-2)', marginBottom: 6 }}>روش تغییر</label>
+                      <select value={bulkForm.mode} onChange={e => setBulkForm(p => ({ ...p, mode: e.target.value }))}
+                        style={{ width: '100%', padding: '9px 12px', border: '1.5px solid var(--border)', fontSize: 13, background: 'var(--surface)', color: 'var(--text)', outline: 'none' }}>
+                        <option value="percent">درصدی (%)</option>
+                        <option value="fixed">عدد ثابت (تومان)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-2)', marginBottom: 6 }}>جهت</label>
+                      <select value={bulkForm.direction} onChange={e => setBulkForm(p => ({ ...p, direction: e.target.value }))}
+                        style={{ width: '100%', padding: '9px 12px', border: '1.5px solid var(--border)', fontSize: 13, background: 'var(--surface)', color: 'var(--text)', outline: 'none' }}>
+                        <option value="increase">افزایش ↑</option>
+                        <option value="decrease">کاهش ↓</option>
+                      </select>
+                    </div>
+                    <div style={{ gridColumn: '1/-1' }}>
+                      <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-2)', marginBottom: 6 }}>
+                        مقدار {bulkForm.mode === 'percent' ? '(درصد)' : '(تومان)'}
+                      </label>
+                      <input type="number" value={bulkForm.amount} onChange={e => setBulkForm(p => ({ ...p, amount: e.target.value }))}
+                        placeholder={bulkForm.mode === 'percent' ? 'مثلاً: ۱۰' : 'مثلاً: ۵۰۰۰۰'}
+                        style={{ width: '100%', padding: '9px 12px', border: '1.5px solid var(--border)', fontSize: 13, background: 'var(--surface)', color: 'var(--text)', outline: 'none' }} />
+                    </div>
+                  </div>
+
+                  {/* Preview */}
+                  {bulkForm.amount > 0 && (
+                    <div style={{ background: bulkForm.direction === 'increase' ? '#D1FAE5' : '#FEF3C7', border: `1px solid ${bulkForm.direction === 'increase' ? '#059669' : '#D97706'}`, padding: '10px 14px', marginBottom: 16, fontSize: 13, color: 'var(--text)' }}>
+                      {bulkForm.direction === 'increase' ? '↑' : '↓'} {bulkForm.mode === 'percent' ? `${bulkForm.amount}٪ ` : `${Number(bulkForm.amount).toLocaleString('fa-IR')} تومان `}
+                      {bulkForm.direction === 'increase' ? 'افزایش' : 'کاهش'} قیمت برای کتاب‌های {bulkForm.bookType === 'digital' ? 'دیجیتال' : bulkForm.bookType === 'physical' ? 'چاپی' : 'همه'}
+                    </div>
+                  )}
+
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                    <button
+                      disabled={!bulkForm.amount || Number(bulkForm.amount) <= 0}
+                      onClick={() => {
+                        bulkUpdatePrices({ ...bulkForm, amount: Number(bulkForm.amount) });
+                        setBulkDone(`قیمت‌ها با موفقیت ${bulkForm.direction === 'increase' ? 'افزایش' : 'کاهش'} یافت`);
+                        setTimeout(() => setBulkDone(''), 3500);
+                      }}
+                      style={{ background: 'var(--primary)', color: '#fff', border: 'none', padding: '10px 24px', fontSize: 13, fontWeight: 700, cursor: !bulkForm.amount || Number(bulkForm.amount) <= 0 ? 'not-allowed' : 'pointer', opacity: !bulkForm.amount || Number(bulkForm.amount) <= 0 ? 0.5 : 1 }}>
+                      اعمال تغییرات
+                    </button>
+                    {bulkDone && <span style={{ fontSize: 13, color: '#059669', fontWeight: 700 }}>✓ {bulkDone}</span>}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ── محتوای لندینگ‌ها ── */}
+            {settingsSection === 'landing' && (
+              <div style={{ maxWidth: 640 }}>
+                <p style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 20 }}>متن‌های نمایش داده شده در صفحه اصلی را ویرایش کنید.</p>
+
+                {/* هیرو */}
+                <div style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', padding: 24, marginBottom: 20 }}>
+                  <p style={{ fontSize: 14, fontWeight: 800, color: 'var(--text)', marginBottom: 16, borderBottom: '1.5px solid var(--border)', paddingBottom: 10 }}>هیرو صفحه اصلی</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {[
+                      ['heroBadge', 'بج بالا (نوار کوچک)'],
+                      ['heroTitle', 'خط اول تیتر'],
+                      ['heroTitleAccent', 'خط دوم تیتر (رنگی)'],
+                      ['heroTitleEnd', 'خط سوم تیتر'],
+                      ['heroSubtitle', 'متن زیر تیتر'],
+                      ['heroDigitalBtn', 'دکمه کتاب‌های دیجیتال'],
+                      ['heroPhysicalBtn', 'دکمه کتاب‌های چاپی'],
+                    ].map(([key, label]) => (
+                      <div key={key}>
+                        <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-2)', marginBottom: 4 }}>{label}</label>
+                        <input value={siteSettings[key] || ''} onChange={e => updateSiteSettings({ [key]: e.target.value })}
+                          style={{ width: '100%', padding: '9px 12px', border: '1.5px solid var(--border)', fontSize: 13, background: 'var(--surface)', color: 'var(--text)', outline: 'none' }}
+                          onFocus={e => e.target.style.borderColor = 'var(--primary)'}
+                          onBlur={e => e.target.style.borderColor = 'var(--border)'}
+                        />
+                      </div>
+                    ))}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+                      {[
+                        ['heroStat1', 'آمار ۱ (عدد)', 'heroStat1Label', 'آمار ۱ (برچسب)'],
+                        ['heroStat2', 'آمار ۲ (عدد)', 'heroStat2Label', 'آمار ۲ (برچسب)'],
+                        ['heroStat3', 'آمار ۳ (عدد)', 'heroStat3Label', 'آمار ۳ (برچسب)'],
+                      ].map(([k1, l1, k2, l2]) => (
+                        <div key={k1} style={{ background: 'var(--bg)', padding: 10, border: '1px solid var(--border)' }}>
+                          <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-3)', marginBottom: 4 }}>{l1}</label>
+                          <input value={siteSettings[k1] || ''} onChange={e => updateSiteSettings({ [k1]: e.target.value })}
+                            style={{ width: '100%', padding: '6px 8px', border: '1px solid var(--border)', fontSize: 13, background: '#fff', color: 'var(--text)', outline: 'none', marginBottom: 6 }} />
+                          <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--text-3)', marginBottom: 4 }}>{l2}</label>
+                          <input value={siteSettings[k2] || ''} onChange={e => updateSiteSettings({ [k2]: e.target.value })}
+                            style={{ width: '100%', padding: '6px 8px', border: '1px solid var(--border)', fontSize: 13, background: '#fff', color: 'var(--text)', outline: 'none' }} />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* بنر چاپی */}
+                <div style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', padding: 24, marginBottom: 20 }}>
+                  <p style={{ fontSize: 14, fontWeight: 800, color: 'var(--text)', marginBottom: 16, borderBottom: '1.5px solid var(--border)', paddingBottom: 10 }}>بنر کتاب‌های چاپی</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {[
+                      ['physicalTitle', 'تیتر (خط اول)'],
+                      ['physicalTitleAccent', 'تیتر (خط دوم — رنگ طلایی)'],
+                      ['physicalSubtitle', 'توضیح'],
+                      ['physicalBtn', 'متن دکمه'],
+                    ].map(([key, label]) => (
+                      <div key={key}>
+                        <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-2)', marginBottom: 4 }}>{label}</label>
+                        <input value={siteSettings[key] || ''} onChange={e => updateSiteSettings({ [key]: e.target.value })}
+                          style={{ width: '100%', padding: '9px 12px', border: '1.5px solid var(--border)', fontSize: 13, background: 'var(--surface)', color: 'var(--text)', outline: 'none' }}
+                          onFocus={e => e.target.style.borderColor = 'var(--primary)'}
+                          onBlur={e => e.target.style.borderColor = 'var(--border)'}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <button onClick={() => { resetSiteSettings(); }} style={{ background: '#FEF2F2', color: '#DC2626', border: '1px solid #FECACA', padding: '9px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
+                  بازگشت به تنظیمات پیش‌فرض
+                </button>
+              </div>
+            )}
+
+            {/* ── اطلاعات فروشگاه ── */}
+            {settingsSection === 'store' && (
+              <div style={{ maxWidth: 540 }}>
+                <p style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 20 }}>اطلاعات پایه فروشگاه شما.</p>
+                <div style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', padding: 24 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                    {[
+                      ['siteName', 'نام فروشگاه'],
+                      ['siteDesc', 'توضیح کوتاه فروشگاه'],
+                      ['siteEmail', 'ایمیل تماس'],
+                      ['sitePhone', 'شماره تلفن'],
+                      ['siteAddress', 'آدرس'],
+                    ].map(([key, label]) => (
+                      <div key={key}>
+                        <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-2)', marginBottom: 5 }}>{label}</label>
+                        <input value={siteSettings[key] || ''} onChange={e => updateSiteSettings({ [key]: e.target.value })}
+                          style={{ width: '100%', padding: '9px 12px', border: '1.5px solid var(--border)', fontSize: 13, background: 'var(--surface)', color: 'var(--text)', outline: 'none' }}
+                          onFocus={e => e.target.style.borderColor = 'var(--primary)'}
+                          onBlur={e => e.target.style.borderColor = 'var(--border)'}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <p style={{ fontSize: 12, color: '#059669', fontWeight: 600, marginTop: 16 }}>✓ تغییرات به صورت خودکار ذخیره می‌شوند</p>
+                </div>
+              </div>
+            )}
+
+            {/* ── تنظیمات ارسال ── */}
+            {settingsSection === 'shipping' && (
+              <div style={{ maxWidth: 540 }}>
+                <p style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 20 }}>هزینه ارسال و حد رایگان شدن آن را تنظیم کنید.</p>
+                <div style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', padding: 24 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-2)', marginBottom: 5 }}>هزینه ارسال (تومان)</label>
+                      <input type="number" value={siteSettings.shippingCost || ''} onChange={e => updateSiteSettings({ shippingCost: Number(e.target.value) })}
+                        style={{ width: '100%', padding: '9px 12px', border: '1.5px solid var(--border)', fontSize: 13, background: 'var(--surface)', color: 'var(--text)', outline: 'none' }}
+                        onFocus={e => e.target.style.borderColor = 'var(--primary)'}
+                        onBlur={e => e.target.style.borderColor = 'var(--border)'}
+                      />
+                      <p style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 4 }}>فعلاً: {(siteSettings.shippingCost || 0).toLocaleString('fa-IR')} تومان</p>
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-2)', marginBottom: 5 }}>حداقل خرید برای ارسال رایگان (تومان)</label>
+                      <input type="number" value={siteSettings.freeShippingMin || ''} onChange={e => updateSiteSettings({ freeShippingMin: Number(e.target.value) })}
+                        style={{ width: '100%', padding: '9px 12px', border: '1.5px solid var(--border)', fontSize: 13, background: 'var(--surface)', color: 'var(--text)', outline: 'none' }}
+                        onFocus={e => e.target.style.borderColor = 'var(--primary)'}
+                        onBlur={e => e.target.style.borderColor = 'var(--border)'}
+                      />
+                      <p style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 4 }}>فعلاً: خریدهای بالای {(siteSettings.freeShippingMin || 0).toLocaleString('fa-IR')} تومان ارسال رایگان دارند</p>
+                    </div>
+                  </div>
+                  <div style={{ marginTop: 20, padding: '12px 16px', background: 'var(--primary-light)', border: '1px solid var(--primary)', fontSize: 13, color: 'var(--primary)' }}>
+                    <strong>خلاصه:</strong> ارسال {(siteSettings.shippingCost || 0).toLocaleString('fa-IR')} تومان — رایگان از {(siteSettings.freeShippingMin || 0).toLocaleString('fa-IR')} تومان به بالا
+                  </div>
+                  <p style={{ fontSize: 12, color: '#059669', fontWeight: 600, marginTop: 16 }}>✓ تغییرات به صورت خودکار ذخیره می‌شوند</p>
+                </div>
+              </div>
+            )}
+
+            {/* ── دسته‌بندی‌ها ── */}
+            {settingsSection === 'categories' && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+                <div style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', padding: 24 }}>
+                  <CategoryManager categories={bookCategories} onAdd={addBookCategory} onRemove={removeBookCategory} label="دسته‌بندی‌های کتاب" />
+                </div>
+                <div style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', padding: 24 }}>
+                  <CategoryManager categories={postCategories} onAdd={addPostCategory} onRemove={removePostCategory} label="دسته‌بندی‌های بلاگ" />
+                </div>
+              </div>
+            )}
           </div>
         )}
       </main>
