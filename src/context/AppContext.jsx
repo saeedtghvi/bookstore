@@ -30,7 +30,14 @@ function save(key, value) {
 export function AppProvider({ children }) {
   const [user, setUser]               = useState(() => load('user', null));
   const [users, setUsers]             = useState(() => load('users', DEFAULT_USERS));
-  const [books, setBooks]             = useState(() => load('books', BOOKS));
+  const [books, setBooks]             = useState(() => {
+    const stored = load('books', null);
+    if (!stored) return BOOKS;
+    // کتاب‌های پیش‌فرض جدید که هنوز در localStorage نیستند را اضافه کن
+    const storedIds = new Set(stored.map(b => b.id));
+    const newDefaults = BOOKS.filter(b => !storedIds.has(b.id));
+    return [...stored, ...newDefaults];
+  });
   const [posts, setPosts]             = useState(() => load('posts', POSTS));
   const [cart, setCart]               = useState(() => load('cart', []));
   const [cartOpen, setCartOpen]       = useState(false);
