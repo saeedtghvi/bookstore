@@ -111,12 +111,6 @@ export default function Login() {
             </button>
           </form>
 
-          {/* Demo accounts */}
-          <div style={{ marginTop: 24, padding: '14px', background: 'var(--bg)', fontSize: 12, color: 'var(--text-3)' }}>
-            <p style={{ fontWeight: 700, marginBottom: 6, color: 'var(--text-2)' }}>حساب‌های آزمایشی:</p>
-            <p>کاربر: user@book.ir / user123</p>
-            <p style={{ marginTop: 3 }}>مدیر: admin@book.ir / admin123</p>
-          </div>
         </div>
 
         <p style={{ textAlign: 'center', marginTop: 20, fontSize: 13, color: 'var(--text-3)' }}>
