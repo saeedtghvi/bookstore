@@ -1,119 +1,90 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { CartIcon, UserIcon, BookOpenIcon, SettingsIcon, LogOutIcon } from './Icons';
+import { CartIcon, UserIcon, BookOpenIcon, SettingsIcon, LogOutIcon, BriefcaseIcon } from './Icons';
 
 export default function Navbar() {
-  const { user, logout, cartCount, setCartOpen } = useApp();
+  const { user, logout, cartCount, setCartOpen, navLinks } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-  const links = [
-    { to: '/', label: 'خانه' },
-    { to: '/blog', label: 'بلاگ' },
-  ];
-  const isActive = (p) => location.pathname === p;
+  const activeLinks = (navLinks || []).filter(l => l.enabled);
+  const isActive = (p) => p === '/' ? location.pathname === '/' : location.pathname.startsWith(p);
 
   return (
-    <nav style={{
-      background: 'var(--nav-bg)',
-      borderBottom: '2px solid var(--dark)',
-      position: 'sticky', top: 0, zIndex: 90,
-      transition: 'background 0.3s',
-    }}>
-      <div style={{
-        maxWidth: 1280, margin: '0 auto', padding: '0 24px',
-        height: 60, display: 'flex', alignItems: 'center',
-        justifyContent: 'space-between', gap: 16,
-      }}>
+    <nav style={{ background: 'var(--nav-bg)', borderBottom: '2px solid var(--dark)', position: 'sticky', top: 0, zIndex: 90, transition: 'background 0.3s' }}>
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+
         {/* Logo */}
         <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
           <div style={{ background: 'var(--primary)', padding: '6px 8px', display: 'flex', alignItems: 'center' }}>
             <BookOpenIcon size={18} />
           </div>
-          <span style={{ fontSize: 17, fontWeight: 900, color: 'var(--text)', letterSpacing: -0.3 }}>
-            کتاب‌خانه
+          <span style={{ fontSize: 18, fontWeight: 900, color: 'var(--text)', letterSpacing: -0.5, fontFamily: 'inherit' }}>
+            بوک‌وی
           </span>
         </Link>
 
         {/* Desktop links */}
         <div className="hide-mobile" style={{ display: 'flex', gap: 0 }}>
-          {links.map(l => (
-            <Link key={l.to} to={l.to} style={{
-              padding: '6px 16px',
-              fontSize: 14, fontWeight: 600,
+          {activeLinks.map(l => (
+            <Link key={l.id} to={l.to} style={{
+              padding: '6px 16px', fontSize: 14, fontWeight: 600,
               color: isActive(l.to) ? '#fff' : 'var(--text-2)',
               background: isActive(l.to) ? 'var(--primary)' : 'transparent',
-              transition: 'all 0.15s',
-              display: 'inline-block',
+              transition: 'all 0.15s', display: 'inline-block',
             }}
             onMouseEnter={e => { if (!isActive(l.to)) e.currentTarget.style.color = 'var(--primary)'; }}
             onMouseLeave={e => { if (!isActive(l.to)) e.currentTarget.style.color = 'var(--text-2)'; }}
-            >
-              {l.label}
-            </Link>
+            >{l.label}</Link>
           ))}
         </div>
 
         {/* Actions */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {/* Cart */}
-          <button onClick={() => setCartOpen(true)} style={{
-            position: 'relative', background: 'transparent',
-            border: '1.5px solid var(--border)', padding: '7px 14px',
-            display: 'flex', alignItems: 'center', gap: 7,
-            fontSize: 13, fontWeight: 600, color: 'var(--text)',
-            cursor: 'pointer', transition: 'all 0.15s',
-          }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--primary)'; e.currentTarget.style.color = 'var(--primary)'; }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text)'; }}
-          >
-            <CartIcon size={17} />
-            <span className="hide-mobile">سبد خرید</span>
-            {cartCount > 0 && (
-              <span style={{
-                background: 'var(--red)', color: '#fff',
-                width: 18, height: 18, fontSize: 10, fontWeight: 800,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>{cartCount}</span>
-            )}
-          </button>
+          {/* Cart — hide for publisher/admin */}
+          {(!user || user.role === 'customer') && (
+            <button onClick={() => setCartOpen(true)} style={{
+              position: 'relative', background: 'transparent', border: '1.5px solid var(--border)',
+              padding: '7px 14px', display: 'flex', alignItems: 'center', gap: 7,
+              fontSize: 13, fontWeight: 600, color: 'var(--text)', cursor: 'pointer', transition: 'all 0.15s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--primary)'; e.currentTarget.style.color = 'var(--primary)'; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text)'; }}
+            >
+              <CartIcon size={17} />
+              <span className="hide-mobile">سبد خرید</span>
+              {cartCount > 0 && (
+                <span style={{ background: 'var(--red)', color: '#fff', width: 18, height: 18, fontSize: 10, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{cartCount}</span>
+              )}
+            </button>
+          )}
 
           {/* Auth */}
           {user ? (
             <div style={{ position: 'relative' }}>
               <button onClick={() => setMenuOpen(p => !p)} style={{
-                background: 'var(--dark)', color: '#fff', border: 'none',
-                padding: '8px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+                background: user.role === 'publisher' ? '#92400E' : 'var(--dark)', color: '#fff',
+                border: 'none', padding: '8px 16px', fontSize: 13, fontWeight: 700, cursor: 'pointer',
                 display: 'flex', alignItems: 'center', gap: 7, transition: 'background 0.15s',
               }}
               onMouseEnter={e => e.currentTarget.style.background = 'var(--primary)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'var(--dark)'}
+              onMouseLeave={e => e.currentTarget.style.background = user.role === 'publisher' ? '#92400E' : 'var(--dark)'}
               >
-                <UserIcon size={15} />
+                {user.role === 'publisher' ? <BriefcaseIcon size={15} /> : <UserIcon size={15} />}
                 <span className="hide-mobile">{user.name.split(' ')[0]}</span>
               </button>
               {menuOpen && (
                 <>
                   <div style={{ position: 'fixed', inset: 0, zIndex: 98 }} onClick={() => setMenuOpen(false)} />
-                  <div style={{
-                    position: 'absolute', top: 44, left: 0,
-                    background: 'var(--surface)', border: '1.5px solid var(--dark)',
-                    boxShadow: '4px 4px 0 var(--dark)',
-                    padding: 6, minWidth: 170, zIndex: 99,
-                  }}>
-                    {user.role === 'admin' ? (
-                      <MenuItem to="/admin" icon={<SettingsIcon size={15} />} label="پنل مدیریت" onClick={() => setMenuOpen(false)} />
-                    ) : (
-                      <MenuItem to="/panel" icon={<BookOpenIcon size={15} />} label="کتابخانه من" onClick={() => setMenuOpen(false)} />
-                    )}
+                  <div style={{ position: 'absolute', top: 44, left: 0, background: 'var(--surface)', border: '1.5px solid var(--dark)', boxShadow: '4px 4px 0 var(--dark)', padding: 6, minWidth: 180, zIndex: 99 }}>
+                    {user.role === 'admin' && <MenuItem to="/admin" icon={<SettingsIcon size={15} />} label="پنل مدیریت" onClick={() => setMenuOpen(false)} />}
+                    {user.role === 'customer' && <MenuItem to="/panel" icon={<BookOpenIcon size={15} />} label="کتابخانه من" onClick={() => setMenuOpen(false)} />}
+                    {user.role === 'publisher' && <MenuItem to="/publisher" icon={<BriefcaseIcon size={15} />} label="پنل ناشر" onClick={() => setMenuOpen(false)} />}
                     <div style={{ height: 1, background: 'var(--border)', margin: '4px 0' }} />
-                    <button onClick={() => { logout(); setMenuOpen(false); navigate('/'); }} style={{
-                      width: '100%', padding: '9px 12px', background: 'none', border: 'none',
-                      cursor: 'pointer', fontSize: 13, color: 'var(--red)', fontWeight: 600,
-                      display: 'flex', alignItems: 'center', gap: 8, direction: 'rtl',
-                    }}>
+                    <button onClick={() => { logout(); setMenuOpen(false); navigate('/'); }} style={{ width: '100%', padding: '9px 12px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 13, color: 'var(--red)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8, direction: 'rtl' }}>
                       <LogOutIcon size={15} /> خروج
                     </button>
                   </div>
@@ -121,34 +92,36 @@ export default function Navbar() {
               )}
             </div>
           ) : (
-            <Link to="/login" style={{
-              background: 'var(--dark)', color: '#fff',
-              padding: '8px 20px', fontSize: 13, fontWeight: 700,
-              transition: 'background 0.15s', display: 'inline-block',
-            }}
-            onMouseEnter={e => e.currentTarget.style.background = 'var(--primary)'}
-            onMouseLeave={e => e.currentTarget.style.background = 'var(--dark)'}
-            >
-              ورود
-            </Link>
+            <Link to="/login" style={{ background: 'var(--dark)', color: '#fff', padding: '8px 20px', fontSize: 13, fontWeight: 700, transition: 'background 0.15s', display: 'inline-block' }}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--primary)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'var(--dark)'}
+            >ورود</Link>
           )}
+
+          {/* Mobile hamburger */}
+          <button className="show-mobile" onClick={() => setMobileOpen(p => !p)} style={{ background: 'transparent', border: '1.5px solid var(--border)', padding: '7px 10px', cursor: 'pointer', color: 'var(--text)', display: 'none' }}>
+            ☰
+          </button>
         </div>
       </div>
+
+      {/* Mobile menu */}
+      {mobileOpen && (
+        <div style={{ background: 'var(--surface)', borderTop: '1px solid var(--border)', padding: '12px 24px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {activeLinks.map(l => (
+            <Link key={l.id} to={l.to} onClick={() => setMobileOpen(false)} style={{ padding: '10px 0', fontSize: 14, fontWeight: 600, color: isActive(l.to) ? 'var(--primary)' : 'var(--text-2)', borderBottom: '1px solid var(--border)' }}>{l.label}</Link>
+          ))}
+        </div>
+      )}
     </nav>
   );
 }
 
 function MenuItem({ to, icon, label, onClick }) {
   return (
-    <Link to={to} onClick={onClick} style={{
-      display: 'flex', alignItems: 'center', gap: 8,
-      padding: '9px 12px', fontSize: 13,
-      fontWeight: 600, color: 'var(--text)', transition: 'background 0.12s',
-    }}
-    onMouseEnter={e => e.currentTarget.style.background = 'var(--bg)'}
-    onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-    >
-      {icon} {label}
-    </Link>
+    <Link to={to} onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', fontSize: 13, fontWeight: 600, color: 'var(--text)', transition: 'background 0.12s' }}
+      onMouseEnter={e => e.currentTarget.style.background = 'var(--bg)'}
+      onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+    >{icon} {label}</Link>
   );
 }

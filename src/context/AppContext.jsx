@@ -7,10 +7,11 @@ export const useApp = () => useContext(AppContext);
 
 const DEFAULT_USERS = [
   { id: 1, name: 'مدیر سایت', email: 'admin@book.ir', password: 'admin123', role: 'admin', purchasedBooks: [], joinDate: '۱۴۰۳/۰۱/۰۱', noPhysical: true, phone: '', province: '', city: '', address: '', postalCode: '' },
-  { id: 2, name: 'کاربر آزمایشی', email: 'user@book.ir', password: 'user123', role: 'customer', purchasedBooks: [1, 3, 8], joinDate: '۱۴۰۳/۰۳/۱۵', noPhysical: false, phone: '09121234567', province: 'تهران', city: 'تهران', address: 'خیابان ولیعصر، پلاک ۱۲', postalCode: '1234567890' },
+  { id: 2, name: 'کاربر آزمایشی', email: 'user@book.ir', password: 'user123', role: 'customer', purchasedBooks: [1, 3, 8, 25, 32, 34], joinDate: '۱۴۰۳/۰۳/۱۵', noPhysical: false, phone: '09121234567', province: 'تهران', city: 'تهران', address: 'خیابان ولیعصر، پلاک ۱۲', postalCode: '1234567890' },
+  { id: 3, name: 'نشر بوک‌وی', email: 'publishers@bookvey.ir', password: '123456789', role: 'publisher', publisherName: 'نشر بوک‌وی', purchasedBooks: [], joinDate: '۱۴۰۳/۰۱/۰۱', noPhysical: true, phone: '', province: '', city: '', address: '', postalCode: '' },
 ];
 
-const DEFAULT_BOOK_CATEGORIES = ['رمان کلاسیک', 'رمان معاصر', 'فانتزی', 'کلاسیک', 'ادبیات فارسی', 'علمی-تخیلی', 'رمان تاریخی'];
+const DEFAULT_BOOK_CATEGORIES = ['رمان کلاسیک', 'رمان معاصر', 'فانتزی', 'کلاسیک', 'ادبیات فارسی', 'علمی-تخیلی', 'رمان تاریخی', 'توسعه فردی', 'علم', 'کسب‌وکار', 'برنامه‌نویسی'];
 const DEFAULT_POST_CATEGORIES = ['راهنما', 'معرفی کتاب', 'سبک زندگی', 'اخبار'];
 
 const DEFAULT_CUSTOMER_GROUPS = [
@@ -47,6 +48,13 @@ const DEFAULT_SITE_SETTINGS = {
   freeShippingMin: 500000,
 };
 
+const DEFAULT_NAV_LINKS = [
+  { id: 1, label: 'خانه', to: '/', enabled: true },
+  { id: 2, label: 'کتاب‌های الکترونیک', to: '/digital', enabled: true },
+  { id: 3, label: 'کتاب‌های چاپی', to: '/physical', enabled: true },
+  { id: 4, label: 'بلاگ', to: '/blog', enabled: true },
+];
+
 function load(key, fallback) {
   try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
   catch { return fallback; }
@@ -79,6 +87,9 @@ export function AppProvider({ children }) {
   const [appliedDiscount, setAppliedDiscount] = useState(null);
   const [customerGroups, setCustomerGroups]   = useState(() => load('customerGroups', DEFAULT_CUSTOMER_GROUPS));
   const [siteSettings, setSiteSettings]       = useState(() => ({ ...DEFAULT_SITE_SETTINGS, ...load('siteSettings', {}) }));
+  const [pendingBooks, setPendingBooks]     = useState(() => load('pendingBooks', []));
+  const [withdrawalRequests, setWithdrawalRequests] = useState(() => load('withdrawalRequests', []));
+  const [navLinks, setNavLinks]             = useState(() => load('navLinks', DEFAULT_NAV_LINKS));
 
   useEffect(() => { save('user', user); },                     [user]);
   useEffect(() => { save('users', users); },                   [users]);
@@ -94,6 +105,9 @@ export function AppProvider({ children }) {
   useEffect(() => { save('discountCodes', discountCodes); },   [discountCodes]);
   useEffect(() => { save('customerGroups', customerGroups); }, [customerGroups]);
   useEffect(() => { save('siteSettings', siteSettings); },     [siteSettings]);
+  useEffect(() => { save('pendingBooks', pendingBooks); },         [pendingBooks]);
+  useEffect(() => { save('withdrawalRequests', withdrawalRequests); }, [withdrawalRequests]);
+  useEffect(() => { save('navLinks', navLinks); },                 [navLinks]);
 
   // Auth
   const login = (email, password) => {
@@ -248,6 +262,55 @@ export function AppProvider({ children }) {
     }));
   };
 
+  // Nav links management
+  const updateNavLinks = (links) => setNavLinks(links);
+
+  // Publisher: submit book for approval
+  const submitBook = (bookData, publisherId) => {
+    const pending = { ...bookData, id: Date.now(), publisherId, status: 'pending', submittedAt: new Date().toLocaleDateString('fa-IR') };
+    setPendingBooks(prev => [...prev, pending]);
+    return { ok: true };
+  };
+
+  // Admin: approve pending book
+  const approveBook = (pendingId) => {
+    const book = pendingBooks.find(b => b.id === pendingId);
+    if (!book) return;
+    const { status, submittedAt, ...bookData } = book;
+    setBooks(prev => [...prev, { ...bookData, approved: true, approvedAt: new Date().toLocaleDateString('fa-IR') }]);
+    setPendingBooks(prev => prev.filter(b => b.id !== pendingId));
+  };
+
+  // Admin: reject pending book
+  const rejectBook = (pendingId, reason = '') => {
+    setPendingBooks(prev => prev.map(b => b.id === pendingId ? { ...b, status: 'rejected', rejectedAt: new Date().toLocaleDateString('fa-IR'), rejectReason: reason } : b));
+  };
+
+  // Publisher: submit withdrawal request
+  const submitWithdrawal = (publisherId, amount, note = '') => {
+    const req = { id: Date.now(), publisherId, amount, note, status: 'pending', requestedAt: new Date().toLocaleDateString('fa-IR') };
+    setWithdrawalRequests(prev => [...prev, req]);
+    return { ok: true };
+  };
+
+  // Admin: update withdrawal status
+  const updateWithdrawal = (id, status) => {
+    setWithdrawalRequests(prev => prev.map(r => r.id === id ? { ...r, status, processedAt: new Date().toLocaleDateString('fa-IR') } : r));
+  };
+
+  // Helper: get publisher's books
+  const getPublisherBooks = (publisherId) => books.filter(b => b.publisherId === publisherId);
+
+  // Helper: get publisher's sales (count users who own each book)
+  const getPublisherSales = (publisherId) => {
+    const pubBooks = getPublisherBooks(publisherId);
+    return pubBooks.map(book => ({
+      ...book,
+      salesCount: users.filter(u => u.purchasedBooks?.includes(book.id)).length,
+      revenue: users.filter(u => u.purchasedBooks?.includes(book.id)).length * book.price,
+    }));
+  };
+
   // Books CRUD
   const addBook    = (book) => setBooks(prev => [...prev, { ...book, id: Date.now() }]);
   const updateBook = (book) => setBooks(prev => prev.map(b => b.id === book.id ? book : b));
@@ -277,6 +340,10 @@ export function AppProvider({ children }) {
       getUserGroup, getUserSpending,
       siteSettings, updateSiteSettings, resetSiteSettings,
       bulkUpdatePrices,
+      navLinks, updateNavLinks,
+      pendingBooks, submitBook, approveBook, rejectBook,
+      withdrawalRequests, submitWithdrawal, updateWithdrawal,
+      getPublisherBooks, getPublisherSales,
     }}>
       {children}
     </AppContext.Provider>

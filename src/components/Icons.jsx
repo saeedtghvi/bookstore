@@ -140,3 +140,21 @@ export const BookmarkIcon = ({ size, filled }) => (
 export const ArrowRightIcon = ({ size }) => (
   <I size={size} d={<><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></>} />
 );
+export const BriefcaseIcon = ({ size }) => (
+  <I size={size} d={<><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></>} />
+);
+export const ClockIcon = ({ size }) => (
+  <I size={size} d={<><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>} />
+);
+export const TrendingDownIcon = ({ size }) => (
+  <I size={size} d={<><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></>} />
+);
+export const SendIcon = ({ size }) => (
+  <I size={size} d={<><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></>} />
+);
+export const AlertIcon = ({ size }) => (
+  <I size={size} d={<><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>} />
+);
+export const DollarIcon = ({ size }) => (
+  <I size={size} d={<><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></>} />
+);

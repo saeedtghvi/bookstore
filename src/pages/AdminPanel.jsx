@@ -4,7 +4,7 @@ import { useApp } from '../context/AppContext';
 import {
   BookOpenIcon, FileTextIcon, HomeIcon, SettingsIcon, LogOutIcon, GlobeIcon,
   EditIcon, TrashIcon, PlusIcon, CheckIcon, BarChartIcon, UsersIcon, UploadIcon,
-  TagIcon, XIcon, StarIcon, UserIcon,
+  TagIcon, XIcon, StarIcon, UserIcon, BriefcaseIcon, ClockIcon, SendIcon, AlertIcon, DollarIcon,
 } from '../components/Icons';
 
 const EMPTY_BOOK = { title: '', author: '', translator: '', price: '', originalPrice: '', physicalPrice: '', cover: '', category: '', shortDescription: '', description: '', sampleContent: '', tags: '', pageCount: '', publishYear: '', publisher: '', language: 'فارسی', featured: false, rating: 4.5, reviewCount: 0, type: 'digital', condition: '' };
@@ -89,6 +89,8 @@ export default function AdminPanel() {
     customerGroups, addCustomerGroup, updateCustomerGroup, deleteCustomerGroup,
     getUserGroup, getUserSpending,
     siteSettings, updateSiteSettings, resetSiteSettings, bulkUpdatePrices,
+    pendingBooks, approveBook, rejectBook, withdrawalRequests, updateWithdrawal,
+    navLinks, updateNavLinks,
   } = useApp();
   const navigate = useNavigate();
   const [tab, setTab] = useState('dashboard');
@@ -107,6 +109,10 @@ export default function AdminPanel() {
   const [storeForm, setStoreForm] = useState(null);
   const [shipForm, setShipForm] = useState(null);
   const [settingsSaved, setSettingsSaved] = useState('');
+  const [pubSubTab, setPubSubTab] = useState('books');
+  const [rejectModal, setRejectModal] = useState(null);
+  const [rejectReason, setRejectReason] = useState('');
+  const [newNavLink, setNewNavLink] = useState({ label: '', to: '' });
 
   const nav = [
     { id: 'dashboard',  icon: <HomeIcon size={16} />,      label: 'داشبورد' },
@@ -115,6 +121,7 @@ export default function AdminPanel() {
     { id: 'users',      icon: <UsersIcon size={16} />,     label: 'کاربران' },
     { id: 'club',       icon: <StarIcon size={16} />,      label: 'باشگاه مشتریان' },
     { id: 'stats',      icon: <BarChartIcon size={16} />,  label: 'آمار' },
+    { id: 'publishers', icon: <BriefcaseIcon size={16} />, label: 'ناشران', badge: (pendingBooks?.length || 0) + (withdrawalRequests?.filter(r => r.status === 'pending').length || 0) },
     { id: 'settings',   icon: <SettingsIcon size={16} />,  label: 'تنظیمات' },
   ];
 
@@ -181,7 +188,11 @@ export default function AdminPanel() {
               color: tab === n.id ? '#fff' : 'rgba(255,255,255,0.5)',
               fontSize: 13, fontWeight: tab === n.id ? 700 : 400, marginBottom: 4, textAlign: 'right',
               borderRight: tab === n.id ? '3px solid var(--primary)' : '3px solid transparent',
-            }}><span>{n.icon}</span> {n.label}</button>
+            }}>
+              <span>{n.icon}</span>
+              <span style={{ flex: 1 }}>{n.label}</span>
+              {n.badge > 0 && <span style={{ background: '#DC2626', color: '#fff', fontSize: 10, fontWeight: 800, borderRadius: '50%', width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{n.badge}</span>}
+            </button>
           ))}
         </nav>
         <div style={{ padding: 12, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
@@ -628,6 +639,134 @@ export default function AdminPanel() {
           </div>
         )}
 
+        {/* PUBLISHERS */}
+        {tab === 'publishers' && (
+          <div className="fade-in">
+            <h1 style={{ fontSize: 22, fontWeight: 800, marginBottom: 20, color: 'var(--text)' }}>مدیریت ناشران</h1>
+
+            {/* Sub-nav */}
+            <div style={{ display: 'flex', gap: 4, marginBottom: 28, borderBottom: '2px solid var(--border)', paddingBottom: 0 }}>
+              {[
+                ['books', 'کتاب‌های در انتظار تأیید', pendingBooks?.length || 0],
+                ['withdrawals', 'درخواست‌های تسویه', withdrawalRequests?.filter(r => r.status === 'pending').length || 0],
+              ].map(([id, label, cnt]) => (
+                <button key={id} onClick={() => setPubSubTab(id)} style={{
+                  padding: '9px 18px', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700,
+                  background: pubSubTab === id ? 'var(--primary)' : 'var(--surface)',
+                  color: pubSubTab === id ? '#fff' : 'var(--text-2)',
+                  borderBottom: pubSubTab === id ? '2px solid var(--primary)' : '2px solid transparent',
+                  marginBottom: -2, display: 'flex', alignItems: 'center', gap: 8,
+                }}>
+                  {label}
+                  {cnt > 0 && <span style={{ background: '#DC2626', color: '#fff', fontSize: 10, fontWeight: 800, borderRadius: '50%', width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{cnt}</span>}
+                </button>
+              ))}
+            </div>
+
+            {/* Pending Books */}
+            {pubSubTab === 'books' && (
+              <div>
+                {(!pendingBooks || pendingBooks.length === 0) ? (
+                  <div style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', padding: '40px 20px', textAlign: 'center' }}>
+                    <div style={{ color: 'var(--text-3)', marginBottom: 8 }}><CheckIcon size={36} /></div>
+                    <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>هیچ کتابی در انتظار تأیید نیست</p>
+                    <p style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 4 }}>همه درخواست‌ها بررسی شده‌اند</p>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                    {pendingBooks.map(pb => (
+                      <div key={pb.id} style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', padding: 20 }}>
+                        <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+                          {/* Cover */}
+                          <div style={{ width: 60, height: 80, background: 'var(--primary-light)', flexShrink: 0, overflow: 'hidden', border: '1px solid var(--border)' }}>
+                            {pb.cover ? <img src={pb.cover} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} onError={e => e.target.style.display = 'none'} /> : null}
+                          </div>
+                          {/* Info */}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6, flexWrap: 'wrap' }}>
+                              <h3 style={{ fontSize: 16, fontWeight: 800, color: 'var(--text)' }}>{pb.title}</h3>
+                              <span style={{ fontSize: 11, padding: '2px 8px', background: '#FEF3C7', color: '#92400E', fontWeight: 700 }}>
+                                {pb.type === 'digital' ? 'الکترونیک' : pb.type === 'physical' ? 'چاپی' : 'الکترونیک + چاپی'}
+                              </span>
+                            </div>
+                            <p style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 4 }}>{pb.author} · {pb.category}</p>
+                            <p style={{ fontSize: 13, color: 'var(--primary)', fontWeight: 700, marginBottom: 8 }}>{Number(pb.price || 0).toLocaleString('fa-IR')} تومان</p>
+                            {pb.shortDescription && <p style={{ fontSize: 12, color: 'var(--text-3)', lineHeight: 1.7 }} className="clamp-2">{pb.shortDescription}</p>}
+                            <div style={{ display: 'flex', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
+                              <span style={{ fontSize: 11, color: 'var(--text-3)' }}><ClockIcon size={11} /> {pb.submittedAt || 'نامشخص'}</span>
+                              {pb.pageCount && <span style={{ fontSize: 11, color: 'var(--text-3)' }}>{pb.pageCount} صفحه</span>}
+                              {pb.publishYear && <span style={{ fontSize: 11, color: 'var(--text-3)' }}>سال {pb.publishYear}</span>}
+                            </div>
+                          </div>
+                          {/* Actions */}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}>
+                            <button onClick={() => { approveBook(pb.id); }} style={{ background: '#059669', color: '#fff', border: 'none', padding: '9px 18px', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <CheckIcon size={14} /> تأیید
+                            </button>
+                            <button onClick={() => { setRejectModal(pb.id); setRejectReason(''); }} style={{ background: '#FEF2F2', color: '#DC2626', border: '1.5px solid #FECACA', padding: '9px 18px', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <XIcon size={14} /> رد کردن
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Withdrawal Requests */}
+            {pubSubTab === 'withdrawals' && (
+              <div>
+                {(!withdrawalRequests || withdrawalRequests.length === 0) ? (
+                  <div style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', padding: '40px 20px', textAlign: 'center' }}>
+                    <div style={{ color: 'var(--text-3)', marginBottom: 8 }}><DollarIcon size={36} /></div>
+                    <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)' }}>هیچ درخواست تسویه‌ای وجود ندارد</p>
+                  </div>
+                ) : (
+                  <div style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', overflow: 'hidden' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 140px 120px 140px', gap: 8, padding: '10px 16px', background: 'var(--bg)', borderBottom: '1.5px solid var(--border)', fontSize: 11, fontWeight: 700, color: 'var(--text-3)' }}>
+                      <span>#</span><span>توضیح / ناشر</span><span>مبلغ</span><span>وضعیت</span><span>عملیات</span>
+                    </div>
+                    {withdrawalRequests.map((wr, i) => {
+                      const pub = users.find(u => u.id === wr.publisherId);
+                      const isPending = wr.status === 'pending';
+                      return (
+                        <div key={wr.id} style={{ display: 'grid', gridTemplateColumns: '80px 1fr 140px 120px 140px', gap: 8, padding: '14px 16px', borderBottom: i < withdrawalRequests.length - 1 ? '1px solid var(--border)' : 'none', alignItems: 'center' }}>
+                          <span style={{ fontSize: 11, color: 'var(--text-3)' }}>#{wr.id}</span>
+                          <div>
+                            <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)' }}>{pub?.name || 'ناشر'}</p>
+                            {wr.note && <p style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>{wr.note}</p>}
+                            <p style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>{wr.date || ''}</p>
+                          </div>
+                          <span style={{ fontSize: 15, fontWeight: 800, color: 'var(--primary)' }}>{Number(wr.amount).toLocaleString('fa-IR')} ت</span>
+                          <span style={{
+                            padding: '4px 10px', fontSize: 12, fontWeight: 700, display: 'inline-block',
+                            background: wr.status === 'approved' ? '#D1FAE5' : wr.status === 'rejected' ? '#FEF2F2' : '#FEF3C7',
+                            color: wr.status === 'approved' ? '#059669' : wr.status === 'rejected' ? '#DC2626' : '#92400E',
+                          }}>
+                            {wr.status === 'approved' ? 'پرداخت شد' : wr.status === 'rejected' ? 'رد شد' : 'در انتظار'}
+                          </span>
+                          {isPending ? (
+                            <div style={{ display: 'flex', gap: 6 }}>
+                              <button onClick={() => updateWithdrawal(wr.id, 'approved')} style={{ background: '#059669', color: '#fff', border: 'none', padding: '5px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                <CheckIcon size={11} /> پرداخت
+                              </button>
+                              <button onClick={() => updateWithdrawal(wr.id, 'rejected')} style={{ background: '#FEF2F2', color: '#DC2626', border: 'none', padding: '5px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                                رد
+                              </button>
+                            </div>
+                          ) : <span style={{ fontSize: 12, color: 'var(--text-3)' }}>—</span>}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* SETTINGS */}
         {tab === 'settings' && (
           <div className="fade-in">
@@ -641,6 +780,7 @@ export default function AdminPanel() {
                 ['store', 'اطلاعات فروشگاه'],
                 ['shipping', 'تنظیمات ارسال'],
                 ['categories', 'دسته‌بندی‌ها'],
+                ['menu', 'مدیریت منو'],
               ].map(([id, label]) => (
                 <button key={id} onClick={() => setSettingsSection(id)} style={{
                   padding: '9px 18px', border: 'none', cursor: 'pointer', fontSize: 13, fontWeight: 700,
@@ -874,9 +1014,108 @@ export default function AdminPanel() {
                 </div>
               </div>
             )}
+
+            {/* ── مدیریت منو ── */}
+            {settingsSection === 'menu' && (
+              <div style={{ maxWidth: 560 }}>
+                <p style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 20 }}>لینک‌های نمایش داده‌شده در نوار ناوبری سایت را مدیریت کنید.</p>
+                <div style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', padding: 24, marginBottom: 20 }}>
+                  <p style={{ fontSize: 14, fontWeight: 800, color: 'var(--text)', marginBottom: 16, borderBottom: '1.5px solid var(--border)', paddingBottom: 10 }}>لینک‌های فعلی منو</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {(navLinks || []).map(link => (
+                      <div key={link.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: 'var(--bg)', border: `1.5px solid ${link.enabled ? 'var(--primary)' : 'var(--border)'}` }}>
+                        <div style={{ flex: 1 }}>
+                          <p style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>{link.label}</p>
+                          <p style={{ fontSize: 11, color: 'var(--text-3)', direction: 'ltr', textAlign: 'right' }}>{link.to}</p>
+                        </div>
+                        {/* Enable/disable toggle */}
+                        <button onClick={() => updateNavLinks(navLinks.map(l => l.id === link.id ? { ...l, enabled: !l.enabled } : l))}
+                          style={{
+                            padding: '6px 14px', cursor: 'pointer', fontSize: 12, fontWeight: 700,
+                            background: link.enabled ? 'var(--primary)' : 'var(--bg)',
+                            color: link.enabled ? '#fff' : 'var(--text-3)',
+                            border: `1.5px solid ${link.enabled ? 'var(--primary)' : 'var(--border)'}`,
+                          }}>
+                          {link.enabled ? 'فعال' : 'غیرفعال'}
+                        </button>
+                        {/* Delete (only for custom links, not system ones with id<=4) */}
+                        {link.id > 4 && (
+                          <button onClick={() => updateNavLinks(navLinks.filter(l => l.id !== link.id))}
+                            style={{ background: '#FEF2F2', color: '#DC2626', border: 'none', padding: '6px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                            <TrashIcon size={13} />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Add custom link */}
+                <div style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', padding: 24 }}>
+                  <p style={{ fontSize: 14, fontWeight: 800, color: 'var(--text)', marginBottom: 16, borderBottom: '1.5px solid var(--border)', paddingBottom: 10 }}>افزودن لینک سفارشی</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-2)', marginBottom: 5 }}>عنوان لینک</label>
+                      <input value={newNavLink.label} onChange={e => setNewNavLink(p => ({ ...p, label: e.target.value }))}
+                        placeholder="مثلاً: تماس با ما"
+                        style={{ width: '100%', padding: '9px 12px', border: '1.5px solid var(--border)', fontSize: 13, background: 'var(--surface)', color: 'var(--text)', outline: 'none' }}
+                        onFocus={e => e.target.style.borderColor = 'var(--primary)'}
+                        onBlur={e => e.target.style.borderColor = 'var(--border)'}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-2)', marginBottom: 5 }}>آدرس (مسیر)</label>
+                      <input value={newNavLink.to} onChange={e => setNewNavLink(p => ({ ...p, to: e.target.value }))}
+                        placeholder="مثلاً: /contact"
+                        dir="ltr"
+                        style={{ width: '100%', padding: '9px 12px', border: '1.5px solid var(--border)', fontSize: 13, background: 'var(--surface)', color: 'var(--text)', outline: 'none' }}
+                        onFocus={e => e.target.style.borderColor = 'var(--primary)'}
+                        onBlur={e => e.target.style.borderColor = 'var(--border)'}
+                      />
+                    </div>
+                    <button
+                      disabled={!newNavLink.label.trim() || !newNavLink.to.trim()}
+                      onClick={() => {
+                        if (!newNavLink.label.trim() || !newNavLink.to.trim()) return;
+                        const maxId = Math.max(...(navLinks || []).map(l => l.id), 4);
+                        updateNavLinks([...(navLinks || []), { id: maxId + 1, label: newNavLink.label.trim(), to: newNavLink.to.trim(), enabled: true }]);
+                        setNewNavLink({ label: '', to: '' });
+                      }}
+                      style={{ background: 'var(--primary)', color: '#fff', border: 'none', padding: '10px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, opacity: (!newNavLink.label.trim() || !newNavLink.to.trim()) ? 0.5 : 1 }}>
+                      <PlusIcon size={14} /> افزودن به منو
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </main>
+
+      {/* Reject book modal */}
+      {rejectModal && (
+        <>
+          <div onClick={() => setRejectModal(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 300 }} />
+          <div style={{ position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', background: 'var(--surface)', padding: 28, zIndex: 301, maxWidth: 400, width: '90%', direction: 'rtl', border: '2px solid var(--dark)', boxShadow: '6px 6px 0 var(--dark)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, color: '#DC2626' }}>
+              <XIcon size={22} />
+              <h3 style={{ fontSize: 17, fontWeight: 800, color: 'var(--text)' }}>رد درخواست کتاب</h3>
+            </div>
+            <p style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 14 }}>دلیل رد کتاب را بنویسید (اختیاری):</p>
+            <textarea value={rejectReason} onChange={e => setRejectReason(e.target.value)} rows={3} placeholder="مثلاً: اطلاعات ناقص است..."
+              style={{ width: '100%', padding: '10px 12px', border: '1.5px solid var(--border)', fontSize: 13, resize: 'vertical', outline: 'none', background: 'var(--bg)', color: 'var(--text)', fontFamily: 'inherit', marginBottom: 16 }}
+              onFocus={e => e.target.style.borderColor = '#DC2626'}
+              onBlur={e => e.target.style.borderColor = 'var(--border)'}
+            />
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button onClick={() => setRejectModal(null)} style={{ padding: '9px 16px', border: '1px solid var(--border)', background: 'var(--surface)', cursor: 'pointer', fontSize: 13, color: 'var(--text)' }}>انصراف</button>
+              <button onClick={() => { rejectBook(rejectModal, rejectReason); setRejectModal(null); setRejectReason(''); }} style={{ padding: '9px 20px', border: 'none', background: '#DC2626', color: '#fff', cursor: 'pointer', fontSize: 13, fontWeight: 700 }}>
+                رد کردن
+              </button>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Delete confirm */}
       {confirmDel && (

@@ -8,6 +8,7 @@ import BlogPost from './pages/BlogPost';
 import Login from './pages/Login';
 import CustomerPanel from './pages/CustomerPanel';
 import AdminPanel from './pages/AdminPanel';
+import PublisherPanel from './pages/PublisherPanel';
 import DigitalBooks from './pages/DigitalBooks';
 import PhysicalBooks from './pages/PhysicalBooks';
 import NotFound from './pages/NotFound';
@@ -43,6 +44,9 @@ function AppContent() {
         } />
         <Route path="/admin/*" element={
           <ProtectedRoute role="admin"><AdminPanel /></ProtectedRoute>
+        } />
+        <Route path="/publisher/*" element={
+          <ProtectedRoute role="publisher"><PublisherPanel /></ProtectedRoute>
         } />
         <Route path="*" element={<NotFound />} />
       </Routes>
