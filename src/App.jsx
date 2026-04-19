@@ -1,5 +1,5 @@
-import React from 'react';
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AppProvider, useApp } from './context/AppContext';
 import Home from './pages/Home';
 import BookDetail from './pages/BookDetail';
@@ -20,9 +20,16 @@ function ProtectedRoute({ children, role }) {
   return children;
 }
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  return null;
+}
+
 function AppContent() {
   return (
     <>
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/book/:id" element={<BookDetail />} />

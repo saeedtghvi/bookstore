@@ -206,6 +206,10 @@ export default function BookDetail() {
                   <MetaPill label="سال" value={book.publishYear} />
                   <MetaPill label="ناشر" value={book.publisher} />
                   <MetaPill label="زبان" value={book.language} />
+                  <MetaPill label="نوع" value={book.type === 'digital' ? 'دیجیتال' : book.type === 'physical' ? 'چاپی' : book.type === 'both' ? 'دیجیتال+چاپی' : 'دیجیتال'} />
+                  {book.condition && conditionInfo && (
+                    <MetaPill label="وضعیت" value={conditionInfo.label} />
+                  )}
                 </div>
 
                 {/* ── نوع انتخاب برای کتاب‌های هر دو نوع ── */}
