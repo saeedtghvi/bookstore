@@ -113,6 +113,17 @@ export default function BookCard({ book, variant = 'default' }) {
             <CheckIcon size={12} /> خریداری شده
           </div>
         )}
+        {/* Type label */}
+        {book.type && (
+          <span style={{
+            position: 'absolute', bottom: owned ? 60 : 34, right: 0,
+            fontSize: 9, fontWeight: 800, letterSpacing: 0.3, padding: '2px 6px',
+            background: book.type === 'physical' ? '#92400E' : book.type === 'both' ? '#1D4ED8' : 'var(--primary)',
+            color: book.type === 'physical' ? '#FEF3C7' : '#fff',
+          }}>
+            {book.type === 'digital' ? 'دیجیتال' : book.type === 'physical' ? 'چاپی' : 'دیجیتال+چاپی'}
+          </span>
+        )}
         {/* Wishlist button */}
         <button onClick={handleWishlist} style={{
           position: 'absolute', bottom: owned ? 36 : 8, left: 8,

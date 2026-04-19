@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import {
   BookOpenIcon, HomeIcon, UserIcon, LogOutIcon, CheckIcon,
-  SunIcon, MoonIcon, PlusIcon, MinusIcon, HeartIcon, StarIcon,
-  MessageCircleIcon, BookmarkIcon,
+  PlusIcon, MinusIcon, HeartIcon, StarIcon,
+  MessageCircleIcon, BookmarkIcon, EditIcon,
 } from '../components/Icons';
 
 /* ── Star rating input ── */
@@ -37,8 +37,147 @@ function ProgressBar({ pct }) {
   );
 }
 
+function ProfileTab({ user, myBooks, wishlistBooks, updateUser }) {
+  const [editAddress, setEditAddress] = useState(false);
+  const [addr, setAddr] = useState({
+    noPhysical: user.noPhysical || false,
+    phone: user.phone || '',
+    province: user.province || '',
+    city: user.city || '',
+    address: user.address || '',
+    postalCode: user.postalCode || '',
+  });
+  const [saved, setSaved] = useState(false);
+
+  const setA = (k) => (e) => setAddr(p => ({ ...p, [k]: e.type === 'checkbox' ? e.target.checked : e.target.value }));
+
+  const handleSave = () => {
+    updateUser({ ...user, ...addr });
+    setSaved(true);
+    setEditAddress(false);
+    setTimeout(() => setSaved(false), 2000);
+  };
+
+  return (
+    <div className="fade-in" style={{ maxWidth: 520 }}>
+      <h1 style={{ fontSize: 22, fontWeight: 900, marginBottom: 28, color: 'var(--text)' }}>اطلاعات حساب</h1>
+
+      {/* User info card */}
+      <div style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', marginBottom: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '20px 24px', borderBottom: '1px solid var(--border)' }}>
+          <div style={{ width: 52, height: 52, background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
+            <UserIcon size={26} />
+          </div>
+          <div>
+            <p style={{ fontSize: 17, fontWeight: 800, color: 'var(--text)' }}>{user.name}</p>
+            <p style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>عضو از {user.joinDate}</p>
+          </div>
+        </div>
+        {[
+          ['ایمیل', user.email],
+          ['کتاب‌های خریداری شده', `${myBooks.length} کتاب`],
+          ['علاقه‌مندی‌ها', `${wishlistBooks.length} کتاب`],
+        ].map(([l, v]) => (
+          <div key={l} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 24px', borderBottom: '1px solid var(--border)', fontSize: 13 }}>
+            <span style={{ color: 'var(--text-3)' }}>{l}</span>
+            <span style={{ fontWeight: 700, color: 'var(--text)' }}>{v}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Address section */}
+      <div style={{ background: 'var(--surface)', border: '1.5px solid var(--border)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 24px', borderBottom: editAddress ? '1px solid var(--border)' : 'none' }}>
+          <div>
+            <p style={{ fontSize: 14, fontWeight: 800, color: 'var(--text)' }}>اطلاعات ارسال</p>
+            <p style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>برای دریافت کتاب‌های چاپی</p>
+          </div>
+          <button onClick={() => setEditAddress(p => !p)} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', background: editAddress ? 'var(--bg)' : 'var(--primary-light)', color: editAddress ? 'var(--text-2)' : 'var(--primary)', border: '1.5px solid', borderColor: editAddress ? 'var(--border)' : 'var(--primary)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+            <EditIcon size={12} /> {editAddress ? 'انصراف' : 'ویرایش آدرس'}
+          </button>
+        </div>
+
+        {!editAddress && (
+          <div style={{ padding: '16px 24px' }}>
+            {user.noPhysical ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text-3)', padding: '10px 14px', background: 'var(--bg)', border: '1px solid var(--border)' }}>
+                <CheckIcon size={14} /> قصد خرید کتاب چاپی ندارم
+              </div>
+            ) : user.address ? (
+              <div style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 2 }}>
+                {user.phone && <p><span style={{ color: 'var(--text-3)', marginLeft: 8 }}>موبایل:</span>{user.phone}</p>}
+                {user.province && <p><span style={{ color: 'var(--text-3)', marginLeft: 8 }}>استان:</span>{user.province}</p>}
+                {user.city && <p><span style={{ color: 'var(--text-3)', marginLeft: 8 }}>شهر:</span>{user.city}</p>}
+                {user.address && <p><span style={{ color: 'var(--text-3)', marginLeft: 8 }}>آدرس:</span>{user.address}</p>}
+                {user.postalCode && <p><span style={{ color: 'var(--text-3)', marginLeft: 8 }}>کد پستی:</span>{user.postalCode}</p>}
+              </div>
+            ) : (
+              <div style={{ fontSize: 13, color: 'var(--text-3)', textAlign: 'center', padding: '20px 0' }}>
+                آدرسی ثبت نشده — برای خرید کتاب‌های چاپی آدرس خود را تکمیل کنید
+              </div>
+            )}
+          </div>
+        )}
+
+        {editAddress && (
+          <div style={{ padding: '20px 24px' }}>
+            {/* No physical checkbox */}
+            <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginBottom: 16, padding: '10px 14px', background: addr.noPhysical ? 'var(--primary-light)' : 'var(--bg)', border: `1.5px solid ${addr.noPhysical ? 'var(--primary)' : 'var(--border)'}`, transition: 'all 0.15s' }}>
+              <input type="checkbox" checked={addr.noPhysical} onChange={setA('noPhysical')} style={{ width: 16, height: 16, cursor: 'pointer', accentColor: 'var(--primary)' }} />
+              <span style={{ fontSize: 13, fontWeight: 700, color: addr.noPhysical ? 'var(--primary)' : 'var(--text)' }}>قصد خرید کتاب چاپی ندارم</span>
+            </label>
+
+            {!addr.noPhysical && (
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                {[
+                  { k: 'phone', label: 'شماره موبایل', placeholder: '09xxxxxxxxx', dir: 'ltr' },
+                  { k: 'province', label: 'استان', placeholder: 'تهران' },
+                  { k: 'city', label: 'شهر', placeholder: 'شهر' },
+                  { k: 'postalCode', label: 'کد پستی', placeholder: '۱۰ رقم', dir: 'ltr' },
+                ].map(({ k, label, placeholder, dir }) => (
+                  <div key={k}>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-2)', marginBottom: 5 }}>{label}</label>
+                    <input value={addr[k]} onChange={setA(k)} placeholder={placeholder} dir={dir}
+                      style={{ width: '100%', padding: '9px 12px', border: '1.5px solid var(--border)', fontSize: 13, outline: 'none', background: '#fff' }}
+                      onFocus={e => e.target.style.borderColor = 'var(--primary)'}
+                      onBlur={e => e.target.style.borderColor = 'var(--border)'}
+                    />
+                  </div>
+                ))}
+                <div style={{ gridColumn: '1/-1' }}>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text-2)', marginBottom: 5 }}>آدرس دقیق</label>
+                  <input value={addr.address} onChange={setA('address')} placeholder="خیابان، کوچه، پلاک، واحد"
+                    style={{ width: '100%', padding: '9px 12px', border: '1.5px solid var(--border)', fontSize: 13, outline: 'none', background: '#fff' }}
+                    onFocus={e => e.target.style.borderColor = 'var(--primary)'}
+                    onBlur={e => e.target.style.borderColor = 'var(--border)'}
+                  />
+                </div>
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>
+              <button onClick={handleSave} style={{ background: 'var(--primary)', color: '#fff', border: 'none', padding: '10px 24px', fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+                <CheckIcon size={14} /> ذخیره
+              </button>
+              <button onClick={() => setEditAddress(false)} style={{ background: 'var(--bg)', color: 'var(--text-2)', border: '1px solid var(--border)', padding: '10px 16px', fontSize: 13, cursor: 'pointer' }}>
+                انصراف
+              </button>
+            </div>
+          </div>
+        )}
+
+        {saved && (
+          <div style={{ padding: '10px 24px', background: '#ECFDF5', borderTop: '1px solid #6EE7B7', fontSize: 13, color: '#065F46', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+            <CheckIcon size={14} /> اطلاعات با موفقیت ذخیره شد
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function CustomerPanel() {
-  const { user, books, logout, wishlist, isWishlisted, toggleWishlist, addReview, getBookReviews, getReadProgress, saveReadProgress } = useApp();
+  const { user, books, logout, wishlist, isWishlisted, toggleWishlist, addReview, getBookReviews, getReadProgress, saveReadProgress, updateUser } = useApp();
   const navigate = useNavigate();
   const [tab, setTab] = useState('library');
   const [readingBook, setReadingBook] = useState(null);
@@ -412,30 +551,7 @@ export default function CustomerPanel() {
 
         {/* PROFILE */}
         {tab === 'profile' && (
-          <div className="fade-in" style={{ maxWidth: 480 }}>
-            <h1 style={{ fontSize: 22, fontWeight: 900, marginBottom: 28, color: 'var(--text)' }}>اطلاعات حساب</h1>
-            <div style={{ background: 'var(--surface)', padding: 28, border: '1.5px solid var(--border)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24, paddingBottom: 20, borderBottom: '1px solid var(--border)' }}>
-                <div style={{ width: 52, height: 52, background: 'var(--primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
-                  <UserIcon size={26} />
-                </div>
-                <div>
-                  <p style={{ fontSize: 17, fontWeight: 800, color: 'var(--text)' }}>{user.name}</p>
-                  <p style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>کاربر عادی</p>
-                </div>
-              </div>
-              {[
-                ['ایمیل', user.email],
-                ['کتاب‌های خریداری شده', `${myBooks.length} کتاب`],
-                ['علاقه‌مندی‌ها', `${wishlistBooks.length} کتاب`],
-              ].map(([l, v]) => (
-                <div key={l} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--border)', fontSize: 13 }}>
-                  <span style={{ color: 'var(--text-3)' }}>{l}</span>
-                  <span style={{ fontWeight: 700, color: 'var(--text)' }}>{v}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+          <ProfileTab user={user} myBooks={myBooks} wishlistBooks={wishlistBooks} updateUser={updateUser} />
         )}
       </main>
     </div>

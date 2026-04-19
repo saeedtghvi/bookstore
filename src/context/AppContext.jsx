@@ -6,8 +6,8 @@ const AppContext = createContext(null);
 export const useApp = () => useContext(AppContext);
 
 const DEFAULT_USERS = [
-  { id: 1, name: 'مدیر سایت', email: 'admin@book.ir', password: 'admin123', role: 'admin', purchasedBooks: [], joinDate: '۱۴۰۳/۰۱/۰۱' },
-  { id: 2, name: 'کاربر آزمایشی', email: 'user@book.ir', password: 'user123', role: 'customer', purchasedBooks: [1, 3, 8], joinDate: '۱۴۰۳/۰۳/۱۵' },
+  { id: 1, name: 'مدیر سایت', email: 'admin@book.ir', password: 'admin123', role: 'admin', purchasedBooks: [], joinDate: '۱۴۰۳/۰۱/۰۱', noPhysical: true, phone: '', province: '', city: '', address: '', postalCode: '' },
+  { id: 2, name: 'کاربر آزمایشی', email: 'user@book.ir', password: 'user123', role: 'customer', purchasedBooks: [1, 3, 8], joinDate: '۱۴۰۳/۰۳/۱۵', noPhysical: false, phone: '09121234567', province: 'تهران', city: 'تهران', address: 'خیابان ولیعصر، پلاک ۱۲', postalCode: '1234567890' },
 ];
 
 const DEFAULT_BOOK_CATEGORIES = ['رمان کلاسیک', 'رمان معاصر', 'فانتزی', 'کلاسیک', 'ادبیات فارسی', 'علمی-تخیلی', 'رمان تاریخی'];
@@ -64,9 +64,18 @@ export function AppProvider({ children }) {
     if (found) { setUser(found); return { ok: true, role: found.role }; }
     return { ok: false, error: 'ایمیل یا رمز عبور اشتباه است' };
   };
-  const register = (name, email, password) => {
+  const register = (name, email, password, addressData = {}) => {
     if (users.find(u => u.email === email)) return { ok: false, error: 'این ایمیل قبلاً ثبت شده' };
-    const newUser = { id: Date.now(), name, email, password, role: 'customer', purchasedBooks: [], joinDate: new Date().toLocaleDateString('fa-IR') };
+    const newUser = {
+      id: Date.now(), name, email, password, role: 'customer', purchasedBooks: [],
+      joinDate: new Date().toLocaleDateString('fa-IR'),
+      noPhysical: addressData.noPhysical || false,
+      phone: addressData.phone || '',
+      province: addressData.province || '',
+      city: addressData.city || '',
+      address: addressData.address || '',
+      postalCode: addressData.postalCode || '',
+    };
     setUsers(prev => [...prev, newUser]);
     setUser(newUser);
     return { ok: true, role: 'customer' };

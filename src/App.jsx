@@ -8,6 +8,8 @@ import BlogPost from './pages/BlogPost';
 import Login from './pages/Login';
 import CustomerPanel from './pages/CustomerPanel';
 import AdminPanel from './pages/AdminPanel';
+import DigitalBooks from './pages/DigitalBooks';
+import PhysicalBooks from './pages/PhysicalBooks';
 import NotFound from './pages/NotFound';
 import Cart from './components/Cart';
 
@@ -24,6 +26,8 @@ function AppContent() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/book/:id" element={<BookDetail />} />
+        <Route path="/digital" element={<DigitalBooks />} />
+        <Route path="/physical" element={<PhysicalBooks />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/blog/:slug" element={<BlogPost />} />
         <Route path="/login" element={<Login />} />

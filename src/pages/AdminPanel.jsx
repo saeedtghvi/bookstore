@@ -7,7 +7,7 @@ import {
   TagIcon, XIcon, StarIcon, UserIcon,
 } from '../components/Icons';
 
-const EMPTY_BOOK = { title: '', author: '', translator: '', price: '', originalPrice: '', cover: '', category: '', shortDescription: '', description: '', sampleContent: '', tags: '', pageCount: '', publishYear: '', publisher: '', language: 'فارسی', featured: false, rating: 4.5, reviewCount: 0 };
+const EMPTY_BOOK = { title: '', author: '', translator: '', price: '', originalPrice: '', physicalPrice: '', cover: '', category: '', shortDescription: '', description: '', sampleContent: '', tags: '', pageCount: '', publishYear: '', publisher: '', language: 'فارسی', featured: false, rating: 4.5, reviewCount: 0, type: 'digital', condition: '' };
 const EMPTY_POST = { title: '', slug: '', excerpt: '', content: '', author: '', category: '', cover: '', readTime: 5, tags: '' };
 const EMPTY_USER = { name: '', email: '', password: '', role: 'customer' };
 
@@ -115,8 +115,9 @@ export default function AdminPanel() {
   const setU = (k) => (e) => setUserForm(p => ({ ...p, [k]: e.target.value }));
 
   const saveBook = () => {
-    const book = { ...bookForm, price: Number(bookForm.price), originalPrice: Number(bookForm.originalPrice) || 0, pageCount: Number(bookForm.pageCount) || 0, publishYear: Number(bookForm.publishYear) || 0, tags: (bookForm.tags || '').split(',').map(t => t.trim()).filter(Boolean) };
+    const book = { ...bookForm, price: Number(bookForm.price), originalPrice: Number(bookForm.originalPrice) || 0, physicalPrice: Number(bookForm.physicalPrice) || 0, pageCount: Number(bookForm.pageCount) || 0, publishYear: Number(bookForm.publishYear) || 0, tags: (bookForm.tags || '').split(',').map(t => t.trim()).filter(Boolean) };
     if (!book.category) book.category = bookCategories[0] || 'عمومی';
+    if (!book.type) book.type = 'digital';
     if (book.id) updateBook(book); else addBook(book);
     setBookForm(null);
   };
@@ -286,6 +287,8 @@ export default function AdminPanel() {
                     <p style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 2 }}>{b.author} · {b.category}</p>
                   </div>
                   {b.featured && <span style={{ fontSize: 10, background: 'var(--primary-light)', color: 'var(--primary)', padding: '2px 8px', fontWeight: 700 }}>ویژه</span>}
+                  {b.type === 'physical' && <span style={{ fontSize: 10, background: '#FEF3C7', color: '#92400E', padding: '2px 8px', fontWeight: 700 }}>چاپی</span>}
+                  {b.type === 'both' && <span style={{ fontSize: 10, background: '#EFF6FF', color: '#1D4ED8', padding: '2px 8px', fontWeight: 700 }}>هر دو</span>}
                   <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--primary)', whiteSpace: 'nowrap' }}>{b.price?.toLocaleString('fa-IR')} ت</span>
                   <div style={{ display: 'flex', gap: 6 }}>
                     <button onClick={() => setBookForm({ ...b, tags: (b.tags || []).join(', ') })} style={{ fontSize: 12, background: 'var(--primary-light)', color: 'var(--primary)', border: 'none', padding: '5px 12px', cursor: 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}><EditIcon size={11} /> ویرایش</button>
@@ -308,9 +311,16 @@ export default function AdminPanel() {
               <AF label="عنوان کتاب *" value={bookForm.title} onChange={setB('title')} required />
               <AF label="نویسنده *" value={bookForm.author} onChange={setB('author')} required />
               <AF label="مترجم" value={bookForm.translator} onChange={setB('translator')} />
-              <AF label="قیمت (تومان) *" value={bookForm.price} onChange={setB('price')} type="number" required />
-              <AF label="قیمت اصلی (قبل از تخفیف)" value={bookForm.originalPrice} onChange={setB('originalPrice')} type="number" />
+              <AF label="نوع کتاب" value={bookForm.type || 'digital'} onChange={setB('type')} type="select" options={['digital', 'physical', 'both']} optionLabels={['دیجیتال', 'چاپی', 'دیجیتال + چاپی']} />
               <AF label="دسته‌بندی" value={bookForm.category} onChange={setB('category')} type="select" options={bookCategories} />
+              <AF label="قیمت دیجیتال (تومان) *" value={bookForm.price} onChange={setB('price')} type="number" required />
+              <AF label="قیمت اصلی (قبل از تخفیف)" value={bookForm.originalPrice} onChange={setB('originalPrice')} type="number" />
+              {(bookForm.type === 'physical' || bookForm.type === 'both') && (
+                <AF label={bookForm.type === 'both' ? 'قیمت نسخه چاپی (تومان)' : 'قیمت چاپی (تومان)'} value={bookForm.physicalPrice} onChange={setB('physicalPrice')} type="number" />
+              )}
+              {(bookForm.type === 'physical' || bookForm.type === 'both') && (
+                <AF label="وضعیت نسخه چاپی" value={bookForm.condition || ''} onChange={setB('condition')} type="select" options={['new', 'like_new', 'read', 'well_read']} optionLabels={['نو', 'در حد نو', 'خوانده شده', 'بسیار خوانده شده']} />
+              )}
               {/* Cover upload */}
               <div style={{ gridColumn: '1/-1' }}>
                 <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 8, color: 'var(--text-2)' }}>تصویر جلد</label>
@@ -652,7 +662,7 @@ export default function AdminPanel() {
   );
 }
 
-function AF({ label, value, onChange, type = 'text', options, rows = 3, span, required }) {
+function AF({ label, value, onChange, type = 'text', options, optionLabels, rows = 3, span, required }) {
   return (
     <div style={{ gridColumn: span ? '1/-1' : undefined }}>
       <label style={{ display: 'block', fontSize: 13, fontWeight: 600, marginBottom: 6, color: 'var(--text-2)' }}>{label}</label>
@@ -667,7 +677,7 @@ function AF({ label, value, onChange, type = 'text', options, rows = 3, span, re
             onFocus={e => e.target.style.borderColor = 'var(--primary)'}
             onBlur={e => e.target.style.borderColor = 'var(--border)'}
           >
-            {options?.map(o => <option key={o} value={o}>{o}</option>)}
+            {options?.map((o, i) => <option key={o} value={o}>{optionLabels ? optionLabels[i] : o}</option>)}
           </select>
         : <input type={type} value={value} onChange={onChange} required={required}
             style={{ width: '100%', padding: '10px 12px', border: '2px solid var(--border)', fontSize: 14, outline: 'none', background: 'var(--surface)', color: 'var(--text)' }}

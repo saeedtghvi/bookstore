@@ -5,6 +5,7 @@ import Footer from '../components/Footer';
 import BookCard from '../components/BookCard';
 import { useApp } from '../context/AppContext';
 import { StarIcon, CartIcon, BookOpenIcon, CheckIcon, ChevronRightIcon } from '../components/Icons';
+import { BOOK_CONDITIONS } from '../data/books';
 
 function Stars({ rating, count }) {
   return (
@@ -35,6 +36,9 @@ export default function BookDetail() {
   const [added, setAdded] = useState(false);
   const [imgErr, setImgErr] = useState(false);
 
+  // برای کتاب‌های هر دو نوع — انتخاب بین دیجیتال و چاپی
+  const [selectedType, setSelectedType] = useState(null); // null = auto
+
   const book = books.find(b => b.id === Number(id));
   if (!book) return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
@@ -49,12 +53,18 @@ export default function BookDetail() {
   );
 
   const owned = hasPurchased(book.id);
-  const discount = book.originalPrice ? Math.round((1 - book.price / book.originalPrice) * 100) : 0;
+  const isBoth = book.type === 'both';
+  // نوع انتخاب شده — برای کتاب‌های هر دو نوع
+  const activeType = isBoth ? (selectedType || 'digital') : (book.type || 'digital');
+  const activePrice = isBoth && activeType === 'physical' ? (book.physicalPrice || book.price) : book.price;
+  const activeOriginalPrice = isBoth && activeType === 'physical' ? null : book.originalPrice;
+  const discount = activeOriginalPrice ? Math.round((1 - activePrice / activeOriginalPrice) * 100) : 0;
   const related = books.filter(b => b.category === book.category && b.id !== book.id).slice(0, 4);
+  const conditionInfo = BOOK_CONDITIONS.find(c => c.value === book.condition);
 
   const handleBuy = () => {
     if (owned) { navigate('/panel'); return; }
-    addToCart(book);
+    addToCart({ ...book, selectedType: activeType, price: activePrice });
     setAdded(true);
     setTimeout(() => setAdded(false), 1800);
   };
@@ -138,13 +148,32 @@ export default function BookDetail() {
 
               {/* ── RIGHT: Info ── */}
               <div>
-                {/* Category badge */}
-                <span style={{
-                  display: 'inline-block', background: 'var(--primary)', color: '#fff',
-                  padding: '3px 12px', fontSize: 11, fontWeight: 700, marginBottom: 14, letterSpacing: '0.3px',
-                }}>
-                  {book.category}
-                </span>
+                {/* Category + Type badges */}
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+                  <span style={{ display: 'inline-block', background: 'var(--primary)', color: '#fff', padding: '3px 12px', fontSize: 11, fontWeight: 700, letterSpacing: '0.3px' }}>
+                    {book.category}
+                  </span>
+                  {book.type === 'digital' && (
+                    <span style={{ display: 'inline-block', background: 'var(--primary-light)', color: 'var(--primary)', padding: '3px 10px', fontSize: 11, fontWeight: 700, border: '1px solid var(--primary)' }}>
+                      دیجیتال
+                    </span>
+                  )}
+                  {book.type === 'physical' && (
+                    <span style={{ display: 'inline-block', background: '#FEF3C7', color: '#92400E', padding: '3px 10px', fontSize: 11, fontWeight: 700, border: '1px solid #FCD34D' }}>
+                      چاپی
+                    </span>
+                  )}
+                  {book.type === 'both' && (
+                    <span style={{ display: 'inline-block', background: '#EFF6FF', color: '#1D4ED8', padding: '3px 10px', fontSize: 11, fontWeight: 700, border: '1px solid #BFDBFE' }}>
+                      دیجیتال + چاپی
+                    </span>
+                  )}
+                  {conditionInfo && (
+                    <span style={{ display: 'inline-block', background: conditionInfo.bg, color: conditionInfo.color, padding: '3px 10px', fontSize: 11, fontWeight: 700, border: `1px solid ${conditionInfo.color}40` }}>
+                      وضعیت: {conditionInfo.label}
+                    </span>
+                  )}
+                </div>
 
                 {/* Title */}
                 <h1 style={{ fontSize: 'clamp(22px, 4vw, 36px)', fontWeight: 900, lineHeight: 1.2, marginBottom: 10, color: 'var(--text)' }}>
@@ -179,22 +208,66 @@ export default function BookDetail() {
                   <MetaPill label="زبان" value={book.language} />
                 </div>
 
+                {/* ── نوع انتخاب برای کتاب‌های هر دو نوع ── */}
+                {isBoth && (
+                  <div style={{ marginBottom: 20, border: '1.5px solid var(--border)', background: 'var(--bg)' }}>
+                    <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--border)', fontSize: 12, fontWeight: 700, color: 'var(--text-2)' }}>
+                      نسخه مورد نظر را انتخاب کنید:
+                    </div>
+                    <div style={{ display: 'flex' }}>
+                      <button onClick={() => setSelectedType('digital')} style={{
+                        flex: 1, padding: '14px 16px', border: 'none', cursor: 'pointer',
+                        borderLeft: '1.5px solid var(--border)',
+                        background: activeType === 'digital' ? 'var(--primary-light)' : 'transparent',
+                        transition: 'background 0.15s',
+                      }}>
+                        <div style={{ fontSize: 13, fontWeight: 800, color: activeType === 'digital' ? 'var(--primary)' : 'var(--text-2)', marginBottom: 3 }}>
+                          {activeType === 'digital' && <CheckIcon size={12} />} دیجیتال
+                        </div>
+                        <div style={{ fontSize: 14, fontWeight: 900, color: 'var(--text)' }}>
+                          {book.price.toLocaleString('fa-IR')} <span style={{ fontSize: 11, fontWeight: 400, color: 'var(--text-3)' }}>تومان</span>
+                        </div>
+                        <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>دسترسی فوری</div>
+                      </button>
+                      <button onClick={() => setSelectedType('physical')} style={{
+                        flex: 1, padding: '14px 16px', border: 'none', cursor: 'pointer',
+                        background: activeType === 'physical' ? '#FEF3C7' : 'transparent',
+                        transition: 'background 0.15s',
+                      }}>
+                        <div style={{ fontSize: 13, fontWeight: 800, color: activeType === 'physical' ? '#92400E' : 'var(--text-2)', marginBottom: 3 }}>
+                          {activeType === 'physical' && <CheckIcon size={12} />} چاپی
+                        </div>
+                        <div style={{ fontSize: 14, fontWeight: 900, color: 'var(--text)' }}>
+                          {(book.physicalPrice || book.price).toLocaleString('fa-IR')} <span style={{ fontSize: 11, fontWeight: 400, color: 'var(--text-3)' }}>تومان</span>
+                        </div>
+                        <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>ارسال به آدرس</div>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {/* ── Price + Buy ── */}
                 <div style={{ background: 'var(--bg)', border: '1.5px solid var(--border)', padding: 20 }} className="book-buy-row">
                   {/* Price */}
                   <div>
-                    {book.originalPrice && (
+                    {activeOriginalPrice && (
                       <div style={{ fontSize: 13, color: 'var(--text-3)', textDecoration: 'line-through', marginBottom: 2 }}>
-                        {book.originalPrice.toLocaleString('fa-IR')} تومان
+                        {activeOriginalPrice.toLocaleString('fa-IR')} تومان
                       </div>
                     )}
                     <div style={{ fontSize: 30, fontWeight: 900, color: 'var(--text)', lineHeight: 1 }}>
-                      {book.price.toLocaleString('fa-IR')}
+                      {activePrice.toLocaleString('fa-IR')}
                       <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-3)', marginRight: 5 }}>تومان</span>
                     </div>
                     {discount > 0 && (
                       <div style={{ fontSize: 12, color: 'var(--red)', fontWeight: 700, marginTop: 4 }}>
                         {discount}٪ تخفیف جشنواره
+                      </div>
+                    )}
+                    {activeType === 'physical' && conditionInfo && (
+                      <div style={{ fontSize: 12, fontWeight: 700, color: conditionInfo.color, marginTop: 6, display: 'flex', alignItems: 'center', gap: 5 }}>
+                        <span style={{ width: 8, height: 8, background: conditionInfo.color, display: 'inline-block', borderRadius: '50%' }} />
+                        وضعیت: {conditionInfo.label}
                       </div>
                     )}
                   </div>
@@ -210,30 +283,33 @@ export default function BookDetail() {
                       onMouseEnter={e => e.currentTarget.style.background = 'var(--primary-2)'}
                       onMouseLeave={e => e.currentTarget.style.background = 'var(--primary)'}
                       >
-                        <BookOpenIcon size={16} /> مطالعه کتاب
+                        <BookOpenIcon size={16} /> {activeType === 'physical' ? 'مشاهده سفارش' : 'مطالعه کتاب'}
                       </button>
                     ) : (
                       <>
                         <button onClick={handleBuy} style={{
-                          background: added ? 'var(--green)' : 'var(--dark)', color: '#fff', border: 'none',
+                          background: added ? 'var(--green)' : (activeType === 'physical' ? '#92400E' : 'var(--dark)'),
+                          color: '#fff', border: 'none',
                           padding: '13px 28px', fontSize: 14, fontWeight: 800, cursor: 'pointer',
                           display: 'flex', alignItems: 'center', gap: 8, transition: 'background 0.2s',
                         }}
                         onMouseEnter={e => { if (!added) e.currentTarget.style.background = 'var(--primary)'; }}
-                        onMouseLeave={e => { if (!added) e.currentTarget.style.background = 'var(--dark)'; }}
+                        onMouseLeave={e => { if (!added) e.currentTarget.style.background = added ? 'var(--green)' : (activeType === 'physical' ? '#92400E' : 'var(--dark)'); }}
                         >
-                          {added ? <><CheckIcon size={16} /> افزوده شد</> : <><CartIcon size={16} /> افزودن به سبد</>}
+                          {added ? <><CheckIcon size={16} /> افزوده شد</> : <><CartIcon size={16} /> {activeType === 'physical' ? 'سفارش چاپی' : 'افزودن به سبد'}</>}
                         </button>
-                        <button onClick={() => setTab('sample')} style={{
-                          background: 'transparent', color: 'var(--primary)', border: '1.5px solid var(--primary)',
-                          padding: '13px 20px', fontSize: 14, fontWeight: 700, cursor: 'pointer',
-                          transition: 'background 0.15s',
-                        }}
-                        onMouseEnter={e => { e.currentTarget.style.background = 'var(--primary-light)'; }}
-                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
-                        >
-                          نمونه رایگان
-                        </button>
+                        {activeType !== 'physical' && (
+                          <button onClick={() => setTab('sample')} style={{
+                            background: 'transparent', color: 'var(--primary)', border: '1.5px solid var(--primary)',
+                            padding: '13px 20px', fontSize: 14, fontWeight: 700, cursor: 'pointer',
+                            transition: 'background 0.15s',
+                          }}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'var(--primary-light)'; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                          >
+                            نمونه رایگان
+                          </button>
+                        )}
                       </>
                     )}
                   </div>
@@ -241,12 +317,19 @@ export default function BookDetail() {
 
                 {/* Guarantees */}
                 <div style={{ display: 'flex', gap: 16, marginTop: 16, flexWrap: 'wrap' }}>
-                  {[['دسترسی فوری پس از خرید'], ['بدون محدودیت مطالعه'], ['آپدیت‌های رایگان']].map(([t]) => (
-                    <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'var(--text-3)', fontWeight: 500 }}>
-                      <CheckIcon size={12} />
-                      {t}
-                    </div>
-                  ))}
+                  {activeType === 'physical' ? (
+                    [['ارسال به سراسر کشور'], ['بسته‌بندی استاندارد'], ['ضمانت سلامت کتاب']].map(([t]) => (
+                      <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'var(--text-3)', fontWeight: 500 }}>
+                        <CheckIcon size={12} /> {t}
+                      </div>
+                    ))
+                  ) : (
+                    [['دسترسی فوری پس از خرید'], ['بدون محدودیت مطالعه'], ['آپدیت‌های رایگان']].map(([t]) => (
+                      <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'var(--text-3)', fontWeight: 500 }}>
+                        <CheckIcon size={12} /> {t}
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             </div>

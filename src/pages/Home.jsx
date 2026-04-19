@@ -255,14 +255,14 @@ export default function Home() {
               تجربه‌ای متفاوت از مطالعه — با امکانات پیشرفته، قیمتی کمتر از نسخه چاپی، و دسترسی فوری پس از خرید.
             </p>
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              <a href="#books" style={{ background: 'var(--primary)', color: '#fff', padding: '13px 28px', fontSize: 15, fontWeight: 700, transition: 'background 0.2s', display: 'flex', alignItems: 'center', gap: 8 }}
+              <Link to="/digital" style={{ background: 'var(--primary)', color: '#fff', padding: '13px 28px', fontSize: 15, fontWeight: 700, transition: 'background 0.2s', display: 'flex', alignItems: 'center', gap: 8 }}
                 onMouseEnter={e => e.currentTarget.style.background = 'var(--primary-2)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'var(--primary)'}
-              >مشاهده کتاب‌ها <ArrowRightIcon size={16} /></a>
-              <Link to="/blog" style={{ background: 'rgba(255,255,255,0.08)', color: '#fff', padding: '13px 28px', fontSize: 15, fontWeight: 600, border: '1px solid rgba(255,255,255,0.15)', transition: 'background 0.2s' }}
-                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.15)'}
+              >کتاب‌های دیجیتال <ArrowRightIcon size={16} /></Link>
+              <Link to="/physical" style={{ background: 'rgba(255,255,255,0.08)', color: '#FEF3C7', padding: '13px 28px', fontSize: 15, fontWeight: 700, border: '1px solid rgba(254,243,199,0.3)', transition: 'background 0.2s', display: 'flex', alignItems: 'center', gap: 8 }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(146,64,14,0.4)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
-              >بلاگ</Link>
+              >کتاب‌های چاپی <ArrowRightIcon size={16} /></Link>
             </div>
             <div style={{ display: 'flex', gap: 32, marginTop: 40, flexWrap: 'wrap' }}>
               {[['۸+', 'کتاب دیجیتال'], ['۲۴+', 'هزار خواننده'], ['۴.۸', 'میانگین امتیاز']].map(([n, l]) => (
@@ -370,6 +370,45 @@ export default function Home() {
               <p style={{ fontSize: 13, marginTop: 6 }}>جستجو یا فیلتر دیگری را امتحان کنید</p>
             </div>
           )}
+        </div>
+      </section>
+
+      {/* Physical Books Banner */}
+      <section style={{ background: '#292524', direction: 'rtl', padding: '48px 24px' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 32, flexWrap: 'wrap' }}>
+          <div>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(146,64,14,0.4)', border: '1px solid rgba(254,243,199,0.2)', padding: '5px 14px', marginBottom: 16 }}>
+              <div style={{ width: 6, height: 6, background: '#FCD34D', borderRadius: '50%' }} />
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#FCD34D' }}>جدید</span>
+            </div>
+            <h2 style={{ fontSize: 'clamp(22px,3vw,36px)', fontWeight: 900, color: '#fff', lineHeight: 1.3, marginBottom: 12 }}>
+              کتاب‌های چاپی<br />
+              <span style={{ color: '#FCD34D' }}>با بهترین وضعیت</span>
+            </h2>
+            <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.55)', lineHeight: 1.9, maxWidth: 440, marginBottom: 28 }}>
+              کتاب‌های چاپی در چهار درجه کیفیت — نو، در حد نو، خوانده شده و بسیار خوانده شده. ارسال به سراسر کشور با بسته‌بندی استاندارد.
+            </p>
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 28 }}>
+              {[['نو', '#059669'], ['در حد نو', '#0284C7'], ['خوانده شده', '#D97706'], ['بسیار خوانده شده', '#DC2626']].map(([label, color]) => (
+                <span key={label} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>
+                  <span style={{ width: 8, height: 8, background: color, display: 'inline-block', borderRadius: '50%' }} />
+                  {label}
+                </span>
+              ))}
+            </div>
+            <Link to="/physical" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#92400E', color: '#FEF3C7', padding: '13px 28px', fontSize: 15, fontWeight: 700, transition: 'background 0.2s' }}
+              onMouseEnter={e => e.currentTarget.style.background = '#78350F'}
+              onMouseLeave={e => e.currentTarget.style.background = '#92400E'}
+            >مشاهده کتاب‌های چاپی <ArrowRightIcon size={16} /></Link>
+          </div>
+          {/* Decorative book stack */}
+          <div className="hide-mobile" style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+            {[{ h: 140, c: '#92400E' }, { h: 180, c: '#78350F' }, { h: 120, c: '#B45309' }, { h: 160, c: '#6B3A2A' }, { h: 100, c: '#92400E' }].map((b, i) => (
+              <div key={i} style={{ width: 28, height: b.h, background: b.c, border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: 2, height: '60%', background: 'rgba(255,255,255,0.1)' }} />
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
