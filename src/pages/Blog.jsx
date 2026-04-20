@@ -18,7 +18,7 @@ export default function Blog() {
       <main style={{ flex: 1, direction: 'rtl', background: 'var(--bg)' }}>
         {/* Header */}
         <div style={{ background: 'var(--dark)', color: '#fff', padding: '40px 24px', textAlign: 'center' }}>
-          <h1 style={{ fontSize: 'clamp(24px,4vw,40px)', fontWeight: 900, marginBottom: 8 }}>بلاگ کتاب‌خانه</h1>
+          <h1 style={{ fontSize: 'clamp(24px,4vw,40px)', fontWeight: 900, marginBottom: 8 }}>بلاگ بوک‌وی</h1>
           <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.6)' }}>مقاله‌ها، معرفی‌ها و راهنماهای مطالعه</p>
         </div>
 

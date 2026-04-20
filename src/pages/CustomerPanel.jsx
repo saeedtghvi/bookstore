@@ -4,7 +4,7 @@ import { useApp } from '../context/AppContext';
 import {
   BookOpenIcon, HomeIcon, UserIcon, LogOutIcon, CheckIcon,
   PlusIcon, MinusIcon, HeartIcon, StarIcon,
-  MessageCircleIcon, BookmarkIcon, EditIcon,
+  MessageCircleIcon, BookmarkIcon, EditIcon, SunIcon, MoonIcon,
 } from '../components/Icons';
 
 /* ── Star rating input ── */
@@ -342,7 +342,7 @@ export default function CustomerPanel() {
             <div style={{ background: 'var(--primary)', color: '#fff', padding: '5px 6px', display: 'flex' }}>
               <BookOpenIcon size={14} />
             </div>
-            <span style={{ fontSize: 15, fontWeight: 900, color: 'var(--text)' }}>کتاب‌خانه</span>
+            <span style={{ fontSize: 15, fontWeight: 900, color: 'var(--text)' }}>بوک‌وی</span>
           </div>
           <p style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 4, marginRight: 28 }}>پنل کاربری</p>
         </div>

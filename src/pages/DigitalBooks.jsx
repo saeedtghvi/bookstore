@@ -80,7 +80,7 @@ export default function DigitalBooks() {
               <BookOpenIcon size={20} />
             </div>
             <div>
-              <h1 style={{ fontSize: 'clamp(22px,3vw,34px)', fontWeight: 900, lineHeight: 1.2 }}>کتاب‌های دیجیتال</h1>
+              <h1 style={{ fontSize: 'clamp(22px,3vw,34px)', fontWeight: 900, lineHeight: 1.2 }}>کتاب‌های الکترونیک</h1>
               <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginTop: 4 }}>بخوانید، هر جا، هر زمان — بدون کاغذ</p>
             </div>
           </div>
@@ -141,7 +141,7 @@ export default function DigitalBooks() {
           </div>
 
           <p style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 20 }}>
-            {filtered.length} کتاب دیجیتال
+            {filtered.length} کتاب الکترونیک
           </p>
 
           {loading ? (

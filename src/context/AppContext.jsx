@@ -29,7 +29,7 @@ const DEFAULT_SITE_SETTINGS = {
   heroSubtitle: 'تجربه‌ای متفاوت از مطالعه — با امکانات پیشرفته، قیمتی کمتر از نسخه چاپی، و دسترسی فوری پس از خرید.',
   heroDigitalBtn: 'کتاب‌های دیجیتال',
   heroPhysicalBtn: 'کتاب‌های چاپی',
-  heroStat1: '۸+', heroStat1Label: 'کتاب دیجیتال',
+  heroStat1: '۸+', heroStat1Label: 'کتاب الکترونیک',
   heroStat2: '۲۴+', heroStat2Label: 'هزار خواننده',
   heroStat3: '۴.۸', heroStat3Label: 'میانگین امتیاز',
   // ─── بنر کتاب‌های چاپی ───
@@ -38,7 +38,7 @@ const DEFAULT_SITE_SETTINGS = {
   physicalSubtitle: 'کتاب‌های چاپی در چهار درجه کیفیت — نو، در حد نو، خوانده شده و بسیار خوانده شده. ارسال به سراسر کشور با بسته‌بندی استاندارد.',
   physicalBtn: 'مشاهده کتاب‌های چاپی',
   // ─── اطلاعات فروشگاه ───
-  siteName: 'کتاب‌خانه',
+  siteName: 'بوک‌وی',
   siteDesc: 'فروشگاه آنلاین کتاب‌های دیجیتال و چاپی',
   siteEmail: '',
   sitePhone: '',
